@@ -1,0 +1,21 @@
+digraph "example_dfg" {
+  n0 [label="Cst(3)"];
+  n1 [label="Cst(0)"];
+  n2 [label="Load(mem=3112018540064)"];
+  n3 [label="Cst(1)"];
+  n4 [label="Load(mem=3112018540064)"];
+  n5 [label="DFGMul"];
+  n6 [label="Cst(2)"];
+  n7 [label="Load(mem=3112018540064)"];
+  n8 [label="DFGAdd"];
+  n9 [label="Store(mem=3112018540064)"];
+  n0 -> n9 [label="addr"];
+  n1 -> n2 [label="addr"];
+  n2 -> n5 [label="in0"];
+  n3 -> n4 [label="addr"];
+  n4 -> n5 [label="in1"];
+  n5 -> n8 [label="in0"];
+  n6 -> n7 [label="addr"];
+  n7 -> n8 [label="in1"];
+  n8 -> n9 [label="val"];
+}
