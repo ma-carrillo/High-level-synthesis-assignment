@@ -1,4 +1,4 @@
-digraph "example_datapath" {
+digraph "datapath" {
   n0 [label="cst:cst"];
   n1 [label="mem_0:mem"];
   n2 [label="mul_0:mul"];

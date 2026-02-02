@@ -1,18 +1,38 @@
+from pathlib import Path
+
 from hls_core import (
-    
     Mem, Cst, Add, Mul, Load, Store, Block,
     Interpreter,
     ASTToCDFG, Scheduler, ResourceBinder, RegisterAllocator,
-    DatapathBuilder, UnifiedVHDLGenerator, DotPrinter, 
-    print_schedule, print_binding, print_edge_registers, 
+    DatapathBuilder, UnifiedVHDLGenerator, DotPrinter,
+    print_schedule, print_binding, print_edge_registers,
     print_datapath, DatapathDotPrinter
-
 )
+
+# =========================
+# Global output folder
+# =========================
+OUT_DIR = Path("test00") 
+
+
+def out_path(filename: str) -> Path:
+    """
+    Return a path inside OUT_DIR and ensure OUT_DIR exists.
+    """
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    return OUT_DIR / filename
+
+
+def write_text(filename: str, text: str) -> None:
+    """
+    Convenience: write a text file into OUT_DIR.
+    """
+    p = out_path(filename)
+    p.write_text(text, encoding="utf-8")
 
 
 # =========================
 # Demo: DOT + FULL unified VHDL + print_datapath(dp)
-# (Single test case: RAM[3] = RAM[0]*RAM[1] + RAM[2])
 # =========================
 
 if __name__ == "__main__":
@@ -32,6 +52,15 @@ if __name__ == "__main__":
         ),
     )])
 
+    print("\n=== INTERPRETER TEST ===")
+
+    interp = Interpreter()
+    interp.run(prog)
+
+    print("Full RAM state =", interp.dump_mem(ram))
+
+    print("\n\n\n")
+
     # 1) Lower AST -> CDFG
     cfg = ASTToCDFG().lower_program(prog)
     bb = next(cfg.nodes())  # single block
@@ -40,18 +69,16 @@ if __name__ == "__main__":
     # 2) DOT output for DFG / CFG (include DFG inside CFG)
     printer = DotPrinter()
 
-    dfg_dot = printer.to_dot_dfg(dfg, name="example_dfg")
-    with open("dfg.dot", "w") as f:
-        f.write(dfg_dot)
+    dfg_dot = printer.to_dot_dfg(dfg, name="dfg")
+    write_text("dfg.dot", dfg_dot)
 
-    cfg_dot = printer.to_dot_cfg(cfg, name="example_cfg", include_dfg=True)
-    with open("cfg_with_dfg.dot", "w") as f:
-        f.write(cfg_dot)
+    cfg_dot = printer.to_dot_cfg(cfg, name="cfg", include_dfg=True)
+    write_text("cfg_with_dfg.dot", cfg_dot)
 
-    print("Wrote: dfg.dot and cfg_with_dfg.dot")
+    print(f"Wrote: {out_path('dfg.dot')} and {out_path('cfg_with_dfg.dot')}")
     print("Render with:")
-    print("  dot -Tpdf dfg.dot -o dfg.pdf")
-    print("  dot -Tpdf cfg_with_dfg.dot -o cfg_with_dfg.pdf")
+    print(f"  dot -Tpdf {out_path('dfg.dot')} -o {out_path('dfg.pdf')}")
+    print(f"  dot -Tpdf {out_path('cfg_with_dfg.dot')} -o {out_path('cfg_with_dfg.pdf')}")
 
     # 3) Scheduling
     schedule = Scheduler().schedule_cfg(cfg)
@@ -94,13 +121,12 @@ if __name__ == "__main__":
 
     # 7) DOT output for datapath graph
     dp_printer = DatapathDotPrinter()
-    dp_dot = dp_printer.to_dot_datapath(dp, name="example_datapath")
-    with open("datapath.dot", "w") as f:
-        f.write(dp_dot)
+    dp_dot = dp_printer.to_dot_datapath(dp, name="datapath")
+    write_text("datapath.dot", dp_dot)
 
-    print("\nWrote: datapath.dot")
+    print(f"\nWrote: {out_path('datapath.dot')}")
     print("Render with:")
-    print("  dot -Tpdf datapath.dot -o datapath.pdf")
+    print(f"  dot -Tpdf {out_path('datapath.dot')} -o {out_path('datapath.pdf')}")
 
     # Sanity: mux_inputs must exist for unified control generation
     if "mux_inputs" not in dp_info or not dp_info["mux_inputs"]:
@@ -117,11 +143,12 @@ if __name__ == "__main__":
     gen = UnifiedVHDLGenerator(top_name="hls_top_unified")
     vhdl = gen.generate_full(dfg, dp, schedule, binding, edge_regs, dp_info)
 
-    with open("hls_top_unified.vhd", "w") as f:
-        f.write(vhdl)
+    write_text("hls_top_unified.vhd", vhdl)
 
-    print("\nWrote: hls_top_unified.vhd")
+    print(f"\nWrote: {out_path('hls_top_unified.vhd')}")
     print("This file includes:")
     print("  - datapath structural instantiations (regs/RAM/add/mul)")
     print("  - mux combinational logic")
     print("  - FSM control (reg enables, mux selects, mem ctrl)")
+
+
