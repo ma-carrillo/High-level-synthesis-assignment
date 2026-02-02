@@ -37,9 +37,6 @@ digraph "example_datapath" {
   n11 -> n17 [label="in"];
   n12 -> n18 [label="in"];
   n13 -> n1 [label="addr"];
-  n13 -> n1 [label="addr"];
-  n13 -> n1 [label="addr"];
-  n13 -> n1 [label="addr"];
   n14 -> n2 [label="in0"];
   n15 -> n2 [label="in1"];
   n16 -> n3 [label="in0"];
