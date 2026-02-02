@@ -1542,16 +1542,39 @@ class UnifiedVHDLGenerator:
                 if res.kind == "add":
                     a_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in0")
                     b_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in1")
-                    y_sig = self._find_single_succ_signal(dp, edge_sig, n.id, needed_label="d")  # to a register
-                    w.writeln(f"U_{res.instance}: Adder32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig});")
+                    # NEW: allow resource reuse over time => multiple 'd' successors
+                    y_sigs = []
+                    for (dst, lab) in dp.succ(n.id):
+                        if lab == "d":
+                            y_sigs.append(edge_sig[(n.id, dst, lab)])
+                    if not y_sigs:
+                        raise RuntimeError(f"No succ with label=d out of add resource node {n.id}")
+
+                    y_sig0 = y_sigs[0]
+                    w.writeln(f"U_{res.instance}: Adder32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig0});")
+
+                    for ys in y_sigs[1:]:
+                        w.writeln(f"{ys} <= {y_sig0};")
 
                 if res.kind == "mul":
                     a_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in0")
                     b_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in1")
-                    y_sig = self._find_single_succ_signal(dp, edge_sig, n.id, needed_label="d")
-                    w.writeln(f"U_{res.instance}: Mul32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig});")
+                    # NEW: allow resource reuse over time => multiple 'd' successors
+                    y_sigs = []
+                    for (dst, lab) in dp.succ(n.id):
+                        if lab == "d":
+                            y_sigs.append(edge_sig[(n.id, dst, lab)])
+                    if not y_sigs:
+                        raise RuntimeError(f"No succ with label=d out of mul resource node {n.id}")
 
-                # Memory resource ports are handled by RamSimple instance above.
+                    y_sig0 = y_sigs[0]
+                    w.writeln(f"U_{res.instance}: Mul32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig0});")
+
+                    # Drive all other 'd' wires with the same multiplier output
+                    for ys in y_sigs[1:]:
+                        w.writeln(f"{ys} <= {y_sig0};")
+
+                    # Memory resource ports are handled by RamSimple instance above.
 
         w.writeln("")
 

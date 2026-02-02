@@ -12,7 +12,7 @@ from hls_core import (
 # =========================
 # Global output folder
 # =========================
-OUT_DIR = Path("test00") 
+OUT_DIR = Path("test03") 
 
 
 def out_path(filename: str) -> Path:
@@ -36,28 +36,61 @@ def write_text(filename: str, text: str) -> None:
 # =========================
 
 if __name__ == "__main__":
-    # One RAM
-    ram = Mem(1024, init=[7, 5, 11])
 
-    # Test case 00
-    prog = Block([Store(
-        ram,
-        Cst(3),
-        Add(
-            Mul(
-                Load(ram, Cst(0)),
-                Load(ram, Cst(1)),
-            ),
-            Load(ram, Cst(2)),
-        ),
-    )])
+    # Three memories: A, W, C
+    A = Mem(6, init=[1, 2, 3, 4, 5, 6])
+    W = Mem(3, init=[7, 8, 9])
+    C = Mem(4, init=[0, 0, 0, 0])
+
+    # Test case 03:
+    # C[0] = A0*W0 + A1*W1 + A2*W2
+    # C[1] = A1*W0 + A2*W1 + A3*W2
+    # C[2] = A2*W0 + A3*W1 + A4*W2
+    # C[3] = A3*W0 + A4*W1 + A5*W2
+    prog = Block([
+        Store(C, Cst(0),
+            Add(
+                Add(
+                    Mul(Load(A, Cst(0)), Load(W, Cst(0))),
+                    Mul(Load(A, Cst(1)), Load(W, Cst(1))),
+                ),
+                Mul(Load(A, Cst(2)), Load(W, Cst(2))),
+            )),
+        Store(C, Cst(1),
+            Add(
+                Add(
+                    Mul(Load(A, Cst(1)), Load(W, Cst(0))),
+                    Mul(Load(A, Cst(2)), Load(W, Cst(1))),
+                ),
+                Mul(Load(A, Cst(3)), Load(W, Cst(2))),
+            )),
+        Store(C, Cst(2),
+            Add(
+                Add(
+                    Mul(Load(A, Cst(2)), Load(W, Cst(0))),
+                    Mul(Load(A, Cst(3)), Load(W, Cst(1))),
+                ),
+                Mul(Load(A, Cst(4)), Load(W, Cst(2))),
+            )),
+        Store(C, Cst(3),
+            Add(
+                Add(
+                    Mul(Load(A, Cst(3)), Load(W, Cst(0))),
+                    Mul(Load(A, Cst(4)), Load(W, Cst(1))),
+                ),
+                Mul(Load(A, Cst(5)), Load(W, Cst(2))),
+            )),
+    ])
+
 
     print("\n=== INTERPRETER TEST ===")
 
     interp = Interpreter()
     interp.run(prog)
 
-    print("Full RAM state =", interp.dump_mem(ram))
+    print("Full RAM A state =", interp.dump_mem(A))
+    print("Full RAM W state =", interp.dump_mem(W))
+    print("Full RAM C state =", interp.dump_mem(C))
 
     print("\n\n\n")
 
