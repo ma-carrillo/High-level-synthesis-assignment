@@ -143,15 +143,17 @@ if __name__ == "__main__":
         print(f"  mux for {res.instance}.{portlab}: {reg_list}")
 
     # 8) Generate FULL unified VHDL (datapath + muxes + FSM control)
-    gen = UnifiedVHDLGenerator(top_name="hls_top_unified")
+    gen = UnifiedVHDLGenerator(top_name="hls_top_unified_01")
     vhdl = gen.generate_full(dfg, dp, schedule, binding, edge_regs, dp_info)
 
-    write_text("hls_top_unified.vhd", vhdl)
+    write_text("hls_top_unified_01.vhd", vhdl)
 
-    print(f"\nWrote: {out_path('hls_top_unified.vhd')}")
+    print(f"\nWrote: {out_path('hls_top_unified_01.vhd')}")
     print("This file includes:")
     print("  - datapath structural instantiations (regs/RAM/add/mul)")
     print("  - mux combinational logic")
     print("  - FSM control (reg enables, mux selects, mem ctrl)")
+
+
 
 

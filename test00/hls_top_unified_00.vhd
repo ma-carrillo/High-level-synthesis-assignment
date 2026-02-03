@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity hls_top_unified is
+entity hls_top_unified_00 is
   port (
     clk   : in  std_logic;
     rst   : in  std_logic;
@@ -10,7 +10,7 @@ entity hls_top_unified is
   );
 end entity;
 
-architecture rtl of hls_top_unified is
+architecture rtl of hls_top_unified_00 is
   signal r0_q  : signed(31 downto 0);
   signal r0_en  : std_logic;
   signal r1_q  : signed(31 downto 0);
@@ -84,8 +84,27 @@ architecture rtl of hls_top_unified is
   end component;
   
   component RamSimple is
-    port(clk: in std_logic; en: in std_logic; we: in std_logic;
-         addr: in signed(31 downto 0); din: in signed(31 downto 0); dout: out signed(31 downto 0));
+    generic (
+      ADDR_WIDTH : integer := 10;
+      DATA_WIDTH : integer := 32;
+      
+      INIT_0 : integer := 0;
+      INIT_1 : integer := 0;
+      INIT_2 : integer := 0;
+      INIT_3 : integer := 0;
+      INIT_4 : integer := 0;
+      INIT_5 : integer := 0;
+      INIT_6 : integer := 0;
+      INIT_7 : integer := 0
+    );
+    port (
+      clk  : in  std_logic;
+      en   : in  std_logic;
+      we   : in  std_logic;
+      addr : in  signed(DATA_WIDTH-1 downto 0);
+      din  : in  signed(DATA_WIDTH-1 downto 0);
+      dout : out signed(DATA_WIDTH-1 downto 0)
+    );
   end component;
   
 begin

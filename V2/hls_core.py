@@ -1492,11 +1492,38 @@ class UnifiedVHDLGenerator:
 
         w.writeln("component RamSimple is")
         w.indent()
-        w.writeln("port(clk: in std_logic; en: in std_logic; we: in std_logic;")
-        w.writeln("     addr: in signed(31 downto 0); din: in signed(31 downto 0); dout: out signed(31 downto 0));")
+
+        w.writeln("generic (")
+        w.indent()
+        w.writeln("ADDR_WIDTH : integer := 10;")
+        w.writeln("DATA_WIDTH : integer := 32;")
+        w.writeln("")
+        w.writeln("INIT_0 : integer := 0;")
+        w.writeln("INIT_1 : integer := 0;")
+        w.writeln("INIT_2 : integer := 0;")
+        w.writeln("INIT_3 : integer := 0;")
+        w.writeln("INIT_4 : integer := 0;")
+        w.writeln("INIT_5 : integer := 0;")
+        w.writeln("INIT_6 : integer := 0;")
+        w.writeln("INIT_7 : integer := 0")
+        w.dedent()
+        w.writeln(");")
+
+        w.writeln("port (")
+        w.indent()
+        w.writeln("clk  : in  std_logic;")
+        w.writeln("en   : in  std_logic;")
+        w.writeln("we   : in  std_logic;")
+        w.writeln("addr : in  signed(DATA_WIDTH-1 downto 0);")
+        w.writeln("din  : in  signed(DATA_WIDTH-1 downto 0);")
+        w.writeln("dout : out signed(DATA_WIDTH-1 downto 0)")
+        w.dedent()
+        w.writeln(");")
+
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
+
 
         # -------------------------
         # 4) Begin architecture body
