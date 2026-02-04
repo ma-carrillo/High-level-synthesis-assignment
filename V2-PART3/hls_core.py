@@ -362,7 +362,7 @@ class ControlFlowGraph(DiGraph):
 
 
 # =========================
-# Small DFG construction helpers (optional)
+# Small DFG construction helpers
 # =========================
 
 class DFGBuilder:
@@ -427,7 +427,7 @@ class ASTToCDFG:
     # --------- Internal lowering helpers ---------
 
     def _lower_stmt(self, stmt):
-        # NEW: handle blocks (possibly nested)
+        
         if isinstance(stmt, Block):
             for s in stmt.stmts:
                 self._lower_stmt(s)
@@ -492,7 +492,7 @@ class ASTToCDFG:
 
 
 # =========================
-# DOT Printer (GraphViz)
+# DOT Printer
 # =========================
 
 class DotPrinter:
@@ -747,9 +747,9 @@ class Scheduler:
         return time_of
 
 
-# =========================
-# (Optional) quick test helper
-# =========================
+# ========================
+#quick test helper
+# ========================
 
 def print_schedule(dfg, schedule):
     # Print by time then id (deterministic)
@@ -870,7 +870,7 @@ class ResourceBinder:
                     if m not in mems:
                         idx = len(mems)
                         inst = f"mem_{idx}"
-                        # Ports are placeholders; you can refine later for VHDL generation
+                    
                         ports = {"addr": "int", "din": "int", "dout": "int", "we": "bit", "clk": "bit"}
                         mems[m] = Resource("mem", self.mem_entity, inst, ports=ports, mem=m)
                     binding[nid] = mems[m]
@@ -923,7 +923,7 @@ class ResourceBinder:
 
 
 # =========================
-# (Optional) pretty-print binding
+# pretty-print binding
 # =========================
 
 def print_binding(dfg, schedule, binding):
@@ -934,7 +934,7 @@ def print_binding(dfg, schedule, binding):
         print(f"t={t:>2}  node {nid:>2}: {nlab:<25} -> {r.instance} ({r.kind})")
 
 
-# =========================
+# ========================
 # Register Allocation
 # =========================
 
@@ -994,7 +994,7 @@ class RegisterAllocator:
 
 
 # =========================
-# (Optional) pretty-print edge registers
+#pretty-print edge registers
 # =========================
 
 def print_edge_registers(dfg, edge_regs):
@@ -1008,9 +1008,9 @@ def print_edge_registers(dfg, edge_regs):
         print(f"  ({src} -> {dst}, {lab})  {s_lab} -> {d_lab}   => {reg.name}")
 
 
-# =========================
-# Datapath Graph + Naive Datapath Generation
-# =========================
+# ========================
+#Datapath Graph + Naive Datapath Generation
+# ========================
 
 class DatapathNode(Node):
     """Base node in the datapath graph."""
@@ -1063,7 +1063,7 @@ class DatapathGraph(DiGraph):
         super().__init__()
 
 # =========================
-# (Optional) DOT printer for datapath graph
+# DOT printer for datapath graph
 # =========================
 
 class DatapathDotPrinter(DotPrinter):
@@ -1073,7 +1073,7 @@ class DatapathDotPrinter(DotPrinter):
 
 
 # =========================
-# (Optional) quick demo helper
+# quick demo helper
 # =========================
 
 def print_datapath(dp):
@@ -1108,7 +1108,7 @@ class VHDLWriter:
 
 
 # =========================
-# DatapathBuilder FIX: record mux inputs (needed for control generation)
+# DatapathBuilder
 # =========================
 
 class DatapathBuilder:
@@ -1228,7 +1228,7 @@ class ControlGenerator:
       - dp_info: from DatapathBuilder.build(), MUST include mux_inputs
 
     Outputs:
-      - A data structure you can use in VHDL generation:
+      - A data structure for VHDL generation:
           control_by_t[t] = {
             "reg_en": set(reg_name),
             "mem_en": set(mem_instance),
@@ -1514,7 +1514,7 @@ class UnifiedVHDLGenerator:
         w.writeln("clk  : in  std_logic;")
         w.writeln("en   : in  std_logic;")
         w.writeln("we   : in  std_logic;")
-        w.writeln("addr : in  signed(DATA_WIDTH-1 downto 0);")
+        w.writeln("addr : in  signed(ADDR_WIDTH-1 downto 0);")
         w.writeln("din  : in  signed(DATA_WIDTH-1 downto 0);")
         w.writeln("dout : out signed(DATA_WIDTH-1 downto 0)")
         w.dedent()
@@ -1547,20 +1547,46 @@ class UnifiedVHDLGenerator:
                 w.writeln(");")
         w.writeln("")
 
-        # 4b) Instantiate RAMs
+
+# per-RAM initialization values (only first 8 slots) ---
+        mem_init8 = {}
+        for inst in mem_ctrl.keys():
+            res = mem_resources[inst]
+            init = list(getattr(res.mem, "init", []) or [])
+            mem_init8[inst] = (init[:8] + [0]*8)[:8]
+
+        # 4b) Instantiate RAMs (WITH INIT generics)
         for inst in sorted(mem_ctrl.keys()):
             c = mem_ctrl[inst]
-            w.writeln(f"U_{inst}: RamSimple port map(")
+            init8 = mem_init8.get(inst, [0]*8)
+
+            w.writeln(f"U_{inst}: RamSimple")
+            w.indent()
+
+            w.writeln("generic map (")
+            w.indent()
+            w.writeln("ADDR_WIDTH => 10,")
+            w.writeln("DATA_WIDTH => 32,")
+            for i in range(8):
+                comma = "," if i < 7 else ""
+                w.writeln(f"INIT_{i} => {int(init8[i])}{comma}")
+            w.dedent()
+            w.writeln(")")
+            w.writeln("port map (")
             w.indent()
             w.writeln("clk  => clk,")
             w.writeln(f"en   => {c['en']},")
             w.writeln(f"we   => {c['we']},")
-            w.writeln(f"addr => {c['addr']},")
+            w.writeln(f"addr => {c['addr']}(9 downto 0),")
             w.writeln(f"din  => {c['din']},")
             w.writeln(f"dout => {c['dout']}")
             w.dedent()
             w.writeln(");")
-        w.writeln("")
+
+            w.dedent()
+            w.writeln("")  #  separator between instances
+
+
 
         # 4c) Instantiate adders/muls (DPResource nodes)
         for n in dp.nodes():
@@ -1850,10 +1876,8 @@ class UnifiedVHDLGenerator:
 
         return w.text()
     
-
-
     # -------------------------
-    # internal helpers (same logic as yours)
+    # internal helpers
     # -------------------------
     def _find_single_pred_signal(self, dp, edge_sig, dst_id, needed_label):
         preds = []

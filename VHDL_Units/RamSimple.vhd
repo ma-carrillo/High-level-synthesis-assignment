@@ -21,7 +21,7 @@ entity RamSimple is
     clk  : in  std_logic;
     en   : in  std_logic;
     we   : in  std_logic;
-    addr : in  signed(DATA_WIDTH-1 downto 0);
+    addr : in signed(ADDR_WIDTH-1 downto 0);
     din  : in  signed(DATA_WIDTH-1 downto 0);
     dout : out signed(DATA_WIDTH-1 downto 0)
   );
@@ -43,12 +43,11 @@ architecture rtl of RamSimple is
 	);
 
 
-  function addr_to_int(a : signed(DATA_WIDTH-1 downto 0)) return integer is
-    variable u : unsigned(ADDR_WIDTH-1 downto 0);
-  begin
-    u := unsigned(a(ADDR_WIDTH-1 downto 0));
-    return to_integer(u);
-  end function;
+  function addr_to_int(a : signed(ADDR_WIDTH-1 downto 0)) return integer is
+    begin
+      return to_integer(unsigned(a));
+    end function;
+
 
   signal a_i : integer range 0 to (2**ADDR_WIDTH)-1;
 begin

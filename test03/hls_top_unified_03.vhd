@@ -367,7 +367,7 @@ architecture rtl of hls_top_unified_03 is
       clk  : in  std_logic;
       en   : in  std_logic;
       we   : in  std_logic;
-      addr : in  signed(DATA_WIDTH-1 downto 0);
+      addr : in  signed(ADDR_WIDTH-1 downto 0);
       din  : in  signed(DATA_WIDTH-1 downto 0);
       dout : out signed(DATA_WIDTH-1 downto 0)
     );
@@ -807,30 +807,71 @@ begin
     q   => r71_q
   );
   
-  U_mem_0: RamSimple port map(
-    clk  => clk,
-    en   => mem_0_en,
-    we   => mem_0_we,
-    addr => mem_0_addr,
-    din  => mem_0_din,
-    dout => mem_0_dout
-  );
-  U_mem_1: RamSimple port map(
-    clk  => clk,
-    en   => mem_1_en,
-    we   => mem_1_we,
-    addr => mem_1_addr,
-    din  => mem_1_din,
-    dout => mem_1_dout
-  );
-  U_mem_2: RamSimple port map(
-    clk  => clk,
-    en   => mem_2_en,
-    we   => mem_2_we,
-    addr => mem_2_addr,
-    din  => mem_2_din,
-    dout => mem_2_dout
-  );
+  U_mem_0: RamSimple
+    generic map (
+      ADDR_WIDTH => 10,
+      DATA_WIDTH => 32,
+      INIT_0 => 1,
+      INIT_1 => 2,
+      INIT_2 => 3,
+      INIT_3 => 4,
+      INIT_4 => 5,
+      INIT_5 => 6,
+      INIT_6 => 0,
+      INIT_7 => 0
+    )
+    port map (
+      clk  => clk,
+      en   => mem_0_en,
+      we   => mem_0_we,
+      addr => mem_0_addr(9 downto 0),
+      din  => mem_0_din,
+      dout => mem_0_dout
+    );
+  
+  U_mem_1: RamSimple
+    generic map (
+      ADDR_WIDTH => 10,
+      DATA_WIDTH => 32,
+      INIT_0 => 7,
+      INIT_1 => 8,
+      INIT_2 => 9,
+      INIT_3 => 0,
+      INIT_4 => 0,
+      INIT_5 => 0,
+      INIT_6 => 0,
+      INIT_7 => 0
+    )
+    port map (
+      clk  => clk,
+      en   => mem_1_en,
+      we   => mem_1_we,
+      addr => mem_1_addr(9 downto 0),
+      din  => mem_1_din,
+      dout => mem_1_dout
+    );
+  
+  U_mem_2: RamSimple
+    generic map (
+      ADDR_WIDTH => 10,
+      DATA_WIDTH => 32,
+      INIT_0 => 0,
+      INIT_1 => 0,
+      INIT_2 => 0,
+      INIT_3 => 0,
+      INIT_4 => 0,
+      INIT_5 => 0,
+      INIT_6 => 0,
+      INIT_7 => 0
+    )
+    port map (
+      clk  => clk,
+      en   => mem_2_en,
+      we   => mem_2_we,
+      addr => mem_2_addr(9 downto 0),
+      din  => mem_2_din,
+      dout => mem_2_dout
+    );
   
   U_mul_0: Mul32 port map(a => sig_81_3, b => sig_82_3, y => sig_3_14);
   sig_3_24 <= sig_3_14;
