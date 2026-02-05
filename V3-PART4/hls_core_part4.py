@@ -19,6 +19,30 @@ class Stmt(ASTNode):
         raise NotImplementedError
     
 
+class For(Stmt):
+    """
+    For loop: for itVar in [0 .. itNum-1]: body
+    Restriction: body may read itVar (Var(itVar.name)) but must NOT assign to itVar.
+    """
+    def __init__(self, itVar, itNum, body):
+        assert isinstance(itVar, Var)
+        assert isinstance(itNum, int) and itNum >= 0
+        assert isinstance(body, Stmt)
+        self.itVar = itVar
+        self.itNum = itNum
+        self.body = body
+
+    def exec(self, interp):
+        # Interpreter semantics
+        for i in range(self.itNum):
+            interp.store_var(self.itVar.name, i)
+            self.body.exec(interp)
+
+    def __repr__(self):
+        return f"For({self.itVar}, {self.itNum}, {self.body})"
+
+    
+
 class Var(Expr):
     """Read variable (register-backed)."""
     def __init__(self, name):
@@ -483,6 +507,10 @@ class ASTToCDFG:
         # Cache for constants is optional; keeps DFG smaller and deterministic-ish.
         self._cst_cache = {}  # value -> dfg_node_id
         self._last_reg_access = {}  # name -> last access node id (LD or ST)
+        self._loop_const_stack = []  # list[dict[str,int]]
+
+
+
 
     def lower_program(self, program_stmt):
         cfg = ControlFlowGraph()
@@ -496,6 +524,13 @@ class ASTToCDFG:
         return cfg  # contains one block with its DFG
 
     # --------- Internal lowering helpers ---------
+
+    def _loop_const_lookup(self, name):
+        for scope in reversed(self._loop_const_stack):
+            if name in scope:
+                return scope[name]
+        return None
+
 
     def _lower_stmt(self, stmt):
         
@@ -511,8 +546,28 @@ class ASTToCDFG:
         if isinstance(stmt, Assign):
             self._lower_assign(stmt)
             return
+        
+        if isinstance(stmt, For):
+            self._lower_for(stmt)
+            return
+        
+
 
         raise TypeError(f"Unsupported statement node: {type(stmt).__name__}")
+
+    def _lower_for(self, st: For):
+        it_name = st.itVar.name
+
+        # Enforce "body never modifies itVar"
+        self._assert_no_assign_to(st.body, it_name)
+
+        # Unroll: repeat body lowering itNum times, with itVar replaced by constants
+        for i in range(st.itNum):
+            self._loop_const_stack.append({it_name: i})
+            try:
+                self._lower_stmt(st.body)
+            finally:
+                self._loop_const_stack.pop()
 
 
     def _lower_store(self, st):
@@ -534,6 +589,12 @@ class ASTToCDFG:
             return self._lower_cst(expr)
         
         if isinstance(expr, Var):
+            # If this Var is a loop iteration variable in scope, replace with constant
+            cval = self._loop_const_lookup(expr.name)
+            if cval is not None:
+                return self._lower_cst(Cst(cval))
+
+            # Otherwise, normal register-backed variable load
             ld_id = self._builder.reg_load(expr.name)
 
             # ordering dependency
@@ -543,6 +604,7 @@ class ASTToCDFG:
             self._last_reg_access[expr.name] = ld_id
 
             return ld_id
+
 
         if isinstance(expr, Add):
             l_id = self._lower_expr(expr.l)
@@ -591,6 +653,22 @@ class ASTToCDFG:
         self._last_reg_access[st.name] = st_id
 
         return st_id
+    
+    def _assert_no_assign_to(self, stmt, it_name: str):
+        # Walk the AST and reject Assign(it_name, ...)
+        if isinstance(stmt, Assign) and stmt.name == it_name:
+            raise ValueError(f"Loop body must not Assign to iteration variable '{it_name}'")
+        if isinstance(stmt, Block):
+            for s in stmt.stmts:
+                self._assert_no_assign_to(s, it_name)
+        if isinstance(stmt, For):
+            # Nested loop: still must not assign to outer it var
+            self._assert_no_assign_to(stmt.body, it_name)
+        if isinstance(stmt, Store):
+            # ok
+            return
+        # Other stmt types: ok (extend if you add more)
+
 
 
 
@@ -777,83 +855,114 @@ class Scheduler:
             for (p, _lab, _kind) in preds:
                 t = max(t, time_of[p] + latency(dfg.node(p)))
             return t
+        
+        def is_cst(nid):
+            return isinstance(dfg.node(nid), DFGCst)
+
 
         cycle = 0
         while unscheduled:
-            # candidates that can start this cycle
-            candidates = [nid for nid in ready if est(nid) <= cycle]
+            # Keep scheduling within the same cycle until no more nodes can start at 'cycle'
+            scheduled_any = False
 
-            # partition by resource
-            add_ready, mul_ready, comb_ready = [], [], []
-            mem_ready = {}
-            reg_ready = {}
+            # Track per-cycle resource usage across multiple "waves" in the same cycle
+            used_add = set()
+            used_mul = set()
+            used_mem = set()   # entries like ("mem", mem_obj)
+            used_reg = set()   # entries like ("reg", reg_name)
 
-            for nid in candidates:
-                k, r = op_resource(nid)
-                if k == "add":
-                    add_ready.append(nid)
-                elif k == "mul":
-                    mul_ready.append(nid)
-                elif k == "comb":
-                    comb_ready.append(nid)
-                elif k == "mem":
-                    mem_ready.setdefault(r, []).append(nid)
-                elif k == "reg":
-                    reg_ready.setdefault(r, []).append(nid)
+            while True:
 
-            for lst in (add_ready, mul_ready, comb_ready):
-                lst.sort()
-            for m in mem_ready:
-                mem_ready[m].sort()
-            for rn in reg_ready:
-                reg_ready[rn].sort()
+                # candidates that can start this cycle
+                candidates = [nid for nid in ready if est(nid) <= cycle]
 
-            scheduled_this_cycle = []
+                # HARD RULE: only constants in cycle 0
+                if cycle == 0:
+                    candidates = [nid for nid in candidates if is_cst(nid)]
 
-            # unlimited: schedule all comb/add/mul
-            scheduled_this_cycle.extend(comb_ready)
-            scheduled_this_cycle.extend(add_ready)
-            scheduled_this_cycle.extend(mul_ready)
+                if not candidates:
+                    break
 
-            # one per mem per cycle
-            for m, lst in mem_ready.items():
-                if lst:
-                    scheduled_this_cycle.append(lst[0])
+                # partition by resource
+                add_ready, mul_ready, comb_ready = [], [], []
+                mem_ready = {}
+                reg_ready = {}
 
-            # one reg store per reg per cycle (usually enforced by dep edges anyway)
-            for rname, lst in reg_ready.items():
-                if lst:
-                    scheduled_this_cycle.append(lst[0])
+                for nid in candidates:
+                    k, r = op_resource(nid)
+                    if k == "add":
+                        # unlimited adders in your model -> no conflict tracking needed
+                        add_ready.append(nid)
+                    elif k == "mul":
+                        mul_ready.append(nid)
+                    elif k == "comb":
+                        comb_ready.append(nid)
+                    elif k == "mem":
+                        mem_ready.setdefault(r, []).append(nid)
+                    elif k == "reg":
+                        reg_ready.setdefault(r, []).append(nid)
 
-            if not scheduled_this_cycle:
-                # if no one can start now, advance time
+                for lst in (add_ready, mul_ready, comb_ready):
+                    lst.sort()
+                for m in mem_ready:
+                    mem_ready[m].sort()
+                for rn in reg_ready:
+                    reg_ready[rn].sort()
+
+                scheduled_this_wave = []
+
+                # unlimited: schedule all comb/add/mul (same as before)
+                scheduled_this_wave.extend(comb_ready)
+                scheduled_this_wave.extend(add_ready)
+                scheduled_this_wave.extend(mul_ready)
+
+                # one per mem per cycle (must respect prior waves in same cycle)
+                for m, lst in mem_ready.items():
+                    if lst and ("mem", m) not in used_mem:
+                        scheduled_this_wave.append(lst[0])
+                        used_mem.add(("mem", m))
+
+                # one reg store per reg per cycle (must respect prior waves in same cycle)
+                for rname, lst in reg_ready.items():
+                    if lst and ("reg", rname) not in used_reg:
+                        scheduled_this_wave.append(lst[0])
+                        used_reg.add(("reg", rname))
+
+                if not scheduled_this_wave:
+                    break
+
+                # commit this wave
+                for nid in scheduled_this_wave:
+                    if nid not in unscheduled:
+                        continue
+                    time_of[nid] = cycle
+                    unscheduled.remove(nid)
+                    scheduled_any = True
+
+                # update readiness
+                newly_ready = []
+                for nid in scheduled_this_wave:
+                    for (dst, _lab, _kind) in dfg.succ(nid):
+                        if dst in unscheduled:
+                            remaining[dst] -= 1
+                            if remaining[dst] == 0:
+                                newly_ready.append(dst)
+
+                ready = [nid for nid in ready if nid not in scheduled_this_wave]
+                ready.extend(newly_ready)
+                ready.sort()
+
+                # RESTORE ORIGINAL BEHAVIOR: do not schedule newly-ready nodes in the same cycle
+                break
+
+            # If nothing could be scheduled at this cycle, advance time
+            if not scheduled_any:
                 cycle += 1
-                continue
-
-            # commit
-            for nid in scheduled_this_cycle:
-                if nid not in unscheduled:
-                    continue
-                time_of[nid] = cycle
-                unscheduled.remove(nid)
-
-            # update graph readiness
-            newly_ready = []
-            for nid in scheduled_this_cycle:
-                for (dst, _lab, _kind) in dfg.succ(nid):
-                    if dst in unscheduled:
-                        remaining[dst] -= 1
-                        if remaining[dst] == 0:
-                            newly_ready.append(dst)
-
-            ready = [nid for nid in ready if nid not in scheduled_this_cycle]
-            ready.extend(newly_ready)
-            ready.sort()
-
-            cycle += 1
+            else:
+                # Even if we scheduled something, we still advance to next cycle for next wave of work
+                cycle += 1
 
         return time_of
-
 
 
 # ========================
@@ -1625,6 +1734,20 @@ class UnifiedVHDLGenerator:
         w.writeln("")
 
 
+        # 2e) Shared FU output signals (one per adder/mul instance)
+        fu_y = {}  # key: ("add"|"mul", instance) -> signal name
+
+        for n in dp.nodes():
+            if isinstance(n, DPResource):
+                res = n.resource
+                if res.kind in ("add", "mul"):
+                    yname = f"{res.instance}_y"
+                    fu_y[(res.kind, res.instance)] = yname
+                    w.writeln(f"signal {yname} : signed(31 downto 0);")
+        w.writeln("")
+
+
+
 
 
         # FSM state signal
@@ -1793,39 +1916,34 @@ class UnifiedVHDLGenerator:
                 if res.kind == "add":
                     a_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in0")
                     b_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in1")
-                    # NEW: allow resource reuse over time => multiple 'd' successors
-                    y_sigs = []
+
+                    y_sig = fu_y[(res.kind, res.instance)]
+                    w.writeln(f"U_{res.instance}: Adder32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig});")
+
+
+                    # Connect shared FU output to all outgoing "d" edges (FU -> registers)
                     for (dst, lab, _kind) in dp.succ(n.id):
                         if lab == "d":
-                            y_sigs.append(edge_sig[(n.id, dst, lab)])
-                    if not y_sigs:
-                        raise RuntimeError(f"No succ with label=d out of add resource node {n.id}")
+                            y_edge_sig = edge_sig[(n.id, dst, lab)]
+                            w.writeln(f"{y_edge_sig} <= {y_sig};")
 
-                    y_sig0 = y_sigs[0]
-                    w.writeln(f"U_{res.instance}: Adder32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig0});")
 
-                    for ys in y_sigs[1:]:
-                        w.writeln(f"{ys} <= {y_sig0};")
 
                 if res.kind == "mul":
                     a_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in0")
                     b_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in1")
-                    # NEW: allow resource reuse over time => multiple 'd' successors
-                    y_sigs = []
+
+                    y_sig = fu_y[(res.kind, res.instance)]
+                    w.writeln(f"U_{res.instance}: Mul32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig});")
+
+                    # IMPORTANT: no y_sigs collection, no fanout assignments
+
+                    # Connect shared FU output to all outgoing "d" edges (FU -> registers)
                     for (dst, lab, _kind) in dp.succ(n.id):
                         if lab == "d":
-                            y_sigs.append(edge_sig[(n.id, dst, lab)])
-                    if not y_sigs:
-                        raise RuntimeError(f"No succ with label=d out of mul resource node {n.id}")
+                            y_edge_sig = edge_sig[(n.id, dst, lab)]
+                            w.writeln(f"{y_edge_sig} <= {y_sig};")
 
-                    y_sig0 = y_sigs[0]
-                    w.writeln(f"U_{res.instance}: Mul32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig0});")
-
-                    # Drive all other 'd' wires with the same multiplier output
-                    for ys in y_sigs[1:]:
-                        w.writeln(f"{ys} <= {y_sig0};")
-
-                    # Memory resource ports are handled by RamSimple instance above.
 
 
 

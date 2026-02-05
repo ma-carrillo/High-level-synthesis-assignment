@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from hls_core_part42 import (
+from hls_core_part4 import (
     Mem, Cst, Add, Mul, Load, Store, Block,
     Interpreter,
     ASTToCDFG, Scheduler, ResourceBinder, RegisterAllocator,
