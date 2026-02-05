@@ -50,8 +50,8 @@ if __name__ == "__main__":
     # i = i + j;
     # ----------------------------------------------------------
     prog = Block([
-        Assign("i", Cst(0)),
-        Assign("j", Cst(1)),
+        Assign("i", Cst(4)),
+        Assign("j", Cst(5)),
         Assign("i", Add(Var("i"), Var("j"))),
     ])
 

@@ -314,8 +314,13 @@ class DiGraph:
 
     def connect(self, src_id, dst_id, label=None, kind="data"):
         assert kind in ("data", "dep")
-        self._succ[src_id].append((dst_id, label, kind))
-        self._pred[dst_id].append((src_id, label, kind))
+        edge = (dst_id, label, kind)
+        if edge not in self._succ[src_id]:
+            self._succ[src_id].append(edge)
+
+        back = (src_id, label, kind)
+        if back not in self._pred[dst_id]:
+            self._pred[dst_id].append(back)
 
     def node(self, nid):
         return self._nodes[nid]
@@ -879,10 +884,6 @@ class Scheduler:
                 # candidates that can start this cycle
                 candidates = [nid for nid in ready if est(nid) <= cycle]
 
-                # HARD RULE: only constants in cycle 0
-                if cycle == 0:
-                    candidates = [nid for nid in candidates if is_cst(nid)]
-
                 if not candidates:
                     break
 
@@ -954,9 +955,6 @@ class Scheduler:
                 ready = [nid for nid in ready if nid not in scheduled_this_wave]
                 ready.extend(newly_ready)
                 ready.sort()
-
-                # RESTORE ORIGINAL BEHAVIOR: do not schedule newly-ready nodes in the same cycle
-                break
 
             # If nothing could be scheduled at this cycle, advance time
             if not scheduled_any:
@@ -1188,19 +1186,6 @@ class Register:
 
 
 class RegisterAllocator:
-    """
-    Assigns registers to DFG edges (producer -> consumer).
-    Rule (per assignment):
-      - One register per edge that carries a produced value.
-      - Store nodes do not produce a value, so edges *out of Store* don't exist anyway.
-      - We allocate registers for edges out of:
-          Cst, Add, Mul, Load
-        and into:
-          Add, Mul, Load (addr), Store (addr/val)
-    Why edge-based:
-      - A node's output may feed multiple consumers => different edges may need different regs.
-    """
-
     def __init__(self):
         self._next_reg = 0
 
@@ -1210,25 +1195,27 @@ class RegisterAllocator:
         return r
 
     def allocate(self, dfg):
-        """
-        Returns:
-          edge_regs: dict[(src_id, dst_id, label)] -> Register
-        """
         edge_regs = {}
 
         for src in dfg.nodes():
             src_node = dfg.node(src.id)
 
-            # Store produces no result; skip allocating regs for its outgoing edges (normally none)
+            # Store produces no value
             if isinstance(src_node, DFGStore):
                 continue
 
             for (dst_id, lab, kind) in dfg.succ(src.id):
                 if kind != "data":
                     continue
+
+                # === OPTION B CORE CHANGE ===
+                # If the producer is combinational (Cst or RegLoad),
+                # do NOT allocate an edge register. Let it be a direct wire.
+                if isinstance(src_node, (DFGCst, DFGRegLoad)):
+                    continue
+
                 key = (src.id, dst_id, lab)
                 edge_regs[key] = self._new_reg()
-
 
         return edge_regs
 
@@ -1382,34 +1369,49 @@ class DatapathBuilder:
         for src in dfg.nodes():
             src_id = src.id
             for (dst_id, lab, kind) in dfg.succ(src_id):
-                
                 if kind != "data":
                     continue
 
                 edge_key = (src_id, dst_id, lab)
 
-                if edge_key not in edge_regs:
-                    continue
-                reg = edge_regs[edge_key]
+                # OLD: skip edge if no reg
+                # if edge_key not in edge_regs:
+                #     continue
 
                 src_res = binding[src_id]
                 dst_res = binding[dst_id]
+                src_dp  = self._ensure_resource(src_res)
 
-                src_dp = self._ensure_resource(src_res)
-                reg_dp = self._ensure_register(reg)
-
-                # producer -> reg
-                self._dp.connect(src_dp, reg_dp, label="d")
-
-                # reg -> mux
                 mux_dp = self._ensure_mux(dst_res, port_label=lab)
-                self._dp.connect(reg_dp, mux_dp, label="in")
 
-                # NEW: remember that this reg is a candidate input for that mux
-                key = (dst_res, lab)
-                self._mux_inputs.setdefault(key, [])
-                if reg.name not in self._mux_inputs[key]:
-                    self._mux_inputs[key].append(reg.name)
+                if edge_key in edge_regs:
+                    # REGISTERED PATH (same as before)
+                    reg = edge_regs[edge_key]
+                    reg_dp = self._ensure_register(reg)
+
+                    self._dp.connect(src_dp, reg_dp, label="d")
+                    self._dp.connect(reg_dp, mux_dp, label="in")
+
+                    key = (dst_res, lab)
+                    self._mux_inputs.setdefault(key, [])
+                    if reg.name not in self._mux_inputs[key]:
+                        self._mux_inputs[key].append(reg.name)
+
+                else:
+                    # === OPTION B CORE CHANGE ===
+                    # WIRE PATH: src goes directly into mux (no edge reg)
+                    self._dp.connect(src_dp, mux_dp, label="in")
+
+                    # We still need a stable "name" for mux inputs so control can select it.
+                    # Use a deterministic token based on producer DFG node id.
+                    wire_name = f"w_{src_id}"
+
+                    key = (dst_res, lab)
+                    self._mux_inputs.setdefault(key, [])
+                    if wire_name not in self._mux_inputs[key]:
+                        self._mux_inputs[key].append(wire_name)
+
+
 
                 # Connect mux -> consumer resource (port lab) ONLY ONCE
                 dst_dp = self._ensure_resource(dst_res)
@@ -1492,16 +1494,26 @@ class ControlGenerator:
         for t in by_t:
             by_t[t].sort()
 
+        # -------------------------
+        # Precompute mux_inputs + cst_tokens (needed for signal declarations)
+        # -------------------------
         mux_inputs = dp_info.get("mux_inputs", {})
         if not mux_inputs:
-            raise RuntimeError("dp_info.mux_inputs missing. Use the updated DatapathBuilder.")
+            raise RuntimeError("dp_info['mux_inputs'] missing. Use updated DatapathBuilder that records mux inputs.")
+
+        cst_tokens = set()
+        for (_k, regs) in mux_inputs.items():
+            for tok in regs:
+                if isinstance(tok, str) and tok.startswith("cst_"):
+                    cst_tokens.add(tok)
+
 
         # Helper: for an operation node (dfg nid), find its *output registers* (one per outgoing edge)
         def output_regs_of(nid):
             regs = []
             n = dfg.node(nid)
             if isinstance(n, (DFGStore, DFGRegStore)):
-                return regs  # no produced value into edge registers
+                return regs
             for (dst, lab, kind) in dfg.succ(nid):
                 if kind != "data":
                     continue
@@ -1511,18 +1523,24 @@ class ControlGenerator:
             return regs
 
 
+
         # Helper: for a given consumer node, find which reg drives its input labeled 'lab'
         def input_reg_of(consumer_nid, lab):
-            # Find the predecessor in DFG with that label
-            preds = [(p, plab, pk) for (p, plab, pk) in dfg.pred(consumer_nid) if pk == "data" and plab == lab]
+            preds = [(p, plab, pk) for (p, plab, pk) in dfg.pred(consumer_nid)
+                    if pk == "data" and plab == lab]
             if len(preds) != 1:
                 raise RuntimeError(f"Expected exactly 1 pred for input {lab} of node {consumer_nid}, got {preds}")
             src_id, _plab, _pk = preds[0]
 
             ekey = (src_id, consumer_nid, lab)
-            if ekey not in edge_regs:
-                raise RuntimeError(f"Missing register allocation for edge {ekey}")
-            return edge_regs[ekey].name
+
+            # If the edge is registered, return reg name
+            if ekey in edge_regs:
+                return edge_regs[ekey].name
+
+            # Otherwise it's a wire from a combinational producer
+            return f"w_{src_id}"
+
 
         control_by_t = {}
 
@@ -1642,6 +1660,28 @@ class UnifiedVHDLGenerator:
         w = VHDLWriter()
 
         # -------------------------
+        # Precompute mux_inputs + cst_tokens (and wire tokens)
+        # -------------------------
+        mux_inputs = dp_info.get("mux_inputs", {})
+        if not mux_inputs:
+            raise RuntimeError("dp_info['mux_inputs'] missing. Use updated DatapathBuilder that records mux inputs.")
+
+        # tokens like "w_<dfg_id>" appear when we bypass edge registers (latency=0 producers)
+        wire_tokens = set()
+        for (_k, toks) in mux_inputs.items():
+            for tok in toks:
+                if isinstance(tok, str) and tok.startswith("w_"):
+                    wire_tokens.add(tok)
+
+
+        cst_tokens = set()
+        for (_k, toks) in mux_inputs.items():
+            for tok in toks:
+                if isinstance(tok, str) and tok.startswith("cst_"):
+                    cst_tokens.add(tok)
+
+
+        # -------------------------
         # 1) Header + entity
         # -------------------------
         w.writeln("library ieee;")
@@ -1715,13 +1755,20 @@ class UnifiedVHDLGenerator:
             w.writeln(f"signal {inst}_dout : signed(31 downto 0);")
         w.writeln("")
 
-        # 2d) one signal per datapath edge
+        def _san(lab):
+            # make a VHDL-friendly suffix
+            if lab is None:
+                return "nolabel"
+            return str(lab).replace("-", "_")
+
+        # 2d) one signal per datapath edge  (FIXED: include label)
         for src in dp.nodes():
             for (dst, lab, _kind) in dp.succ(src.id):
-                sname = f"sig_{src.id}_{dst}"
+                sname = f"sig_{src.id}_{dst}_{_san(lab)}"
                 edge_sig[(src.id, dst, lab)] = sname
                 w.writeln(f"signal {sname} : signed(31 downto 0);")
         w.writeln("")
+
 
         var_resources = {}
         for dfg_nid, res in binding.items():
@@ -1748,6 +1795,10 @@ class UnifiedVHDLGenerator:
                     fu_y[(res.kind, res.instance)] = yname
                     w.writeln(f"signal {yname} : signed(31 downto 0);")
         w.writeln("")
+
+        for tok in sorted(cst_tokens):
+            w.writeln(f"signal {tok} : signed(31 downto 0);")
+
 
 
 
@@ -1845,9 +1896,10 @@ class UnifiedVHDLGenerator:
                 qsig = var_ctrl[inst]["q"]
                 src_dp = n.id
                 for (dst_id, lab, _kind) in dp.succ(src_dp):
-                    if lab == "d":
-                        sig_name = edge_sig[(src_dp, dst_id, "d")]
-                        w.writeln(f"{sig_name} <= {qsig};")
+                    # the resource output value is its Q, regardless of edge label
+                    sig_name = edge_sig[(src_dp, dst_id, lab)]
+                    w.writeln(f"{sig_name} <= {qsig};")
+
         w.writeln("")
 
 
@@ -2004,10 +2056,32 @@ class UnifiedVHDLGenerator:
         # -------------------------
         # 4d) MUX combinational logic (NOW INCLUDED)
         # -------------------------
-        # dp_info["mux_inputs"] keys: (dst_res, port_label) -> [reg_name0, reg_name1,...]
-        mux_inputs = dp_info.get("mux_inputs", {})
-        if not mux_inputs:
-            raise RuntimeError("dp_info['mux_inputs'] missing. Use updated DatapathBuilder that records mux inputs.")
+        # dp_info["mux_inputs"] keys: (dst_res, port_label) -> [token0, token1, ...]
+        # where token can be:
+        #   - edge reg name like "r3"
+        #   - direct var q signal like "var_i_q"
+        #   - direct const signal like "cst_0" (we will declare/drive these here)
+
+        # --- NEW: declare/drive any constant mux-input signals cst_<int> once ---
+        cst_tokens = set()
+        for (_k, regs) in mux_inputs.items():
+            for tok in regs:
+                if isinstance(tok, str) and tok.startswith("cst_"):
+                    cst_tokens.add(tok)
+
+        # Declare signals (architecture declarative region) already happened earlier,
+        # so here we only DRIVE them. If you also want declarations here, move
+        # those writeln() calls up into the signal declaration section.
+        # We assume you'll declare them in section 2) if needed.
+        for tok in sorted(cst_tokens):
+            # tok = "cst_<value>"
+            try:
+                v = int(tok.split("_", 1)[1])
+            except Exception:
+                raise RuntimeError(f"Bad constant token '{tok}'. Expected format 'cst_<int>'")
+            w.writeln(f"{tok} <= to_signed({v}, 32);")
+        if cst_tokens:
+            w.writeln("")
 
         # For each mux node, we generate:
         #   process(all) begin case sel_muxname is ... end case; end process;
@@ -2022,21 +2096,11 @@ class UnifiedVHDLGenerator:
             if not mux_out_edges:
                 continue
 
-            # Find mux input edges (reg -> mux) with label "in"
+            # Find mux input edges (... -> mux) with label "in"
             preds = [(src, lab, _kind) for (src, lab, _kind) in dp.pred(n.id) if lab == "in"]
-
-
-            # Build reg_name -> incoming_signal map for this mux
-            reg_to_sig = {}
-            for (src_id, _lab, kind) in preds:
-                src_node = dp_node_by_id[src_id]
-                if isinstance(src_node, DPRegister):
-                    # Find signal on edge (src -> mux, "in")
-                    reg_to_sig[src_node.reg.name] = reg_q[src_node.reg.name]
 
             # Determine the canonical order (must match control generator)
             # Mux name is "<dst_res.instance>_<port_label>"
-            # So retrieve (dst_res, port_label) by matching this mux.name.
             key_match = None
             for (dst_res, portlab), regs in mux_inputs.items():
                 if f"{dst_res.instance}_{portlab}" == n.name:
@@ -2047,21 +2111,87 @@ class UnifiedVHDLGenerator:
 
             ordered_regs = mux_inputs[key_match]
 
+                        # Map each ordered token -> VHDL signal expression
+            token_to_expr = {}
+
+            # 1) Registered inputs: DPRegister preds give rX_q signals
+            for (src_id, _lab, _kind) in preds:
+                src_node = dp_node_by_id[src_id]
+                if isinstance(src_node, DPRegister):
+                    token_to_expr[src_node.reg.name] = reg_q[src_node.reg.name]
+
+            # 2) Direct variable Q signals (already real signals)
+            for tok in ordered_regs:
+                if isinstance(tok, str) and tok.endswith("_q"):
+                    token_to_expr[tok] = tok
+
+            # 3) Constant tokens cst_<v> (if present)
+            for tok in ordered_regs:
+                if isinstance(tok, str) and tok.startswith("cst_"):
+                    token_to_expr[tok] = tok
+
+            # 4) Wire tokens w_<dfg_id>
+            for tok in ordered_regs:
+                if not (isinstance(tok, str) and tok.startswith("w_")):
+                    continue
+
+                try:
+                    src_dfg_id = int(tok.split("_", 1)[1])
+                except Exception:
+                    raise RuntimeError(f"Bad wire token '{tok}'. Expected format 'w_<dfg_id>'")
+
+                if src_dfg_id not in binding:
+                    raise RuntimeError(f"Wire token {tok}: no binding for DFG node {src_dfg_id}")
+
+                src_dfg_node = dfg.node(src_dfg_id)
+
+                # If bypassing from a constant, use literal directly (no dp edge needed)
+                if isinstance(src_dfg_node, DFGCst):
+                    token_to_expr[tok] = f"to_signed({src_dfg_node.value}, 32)"
+                    continue
+
+                # If bypassing from a reg-load, use the variable register Q directly
+                if isinstance(src_dfg_node, DFGRegLoad):
+                    vinst = f"var_{src_dfg_node.name}"
+                    token_to_expr[tok] = var_ctrl[vinst]["q"]
+                    continue
+
+                # Otherwise (e.g., mem load or other), fall back to the dp edge signal
+                src_res = binding[src_dfg_id]
+                src_dp  = dp_info["res_node"][src_res]
+                mux_dp  = n.id
+
+                found = None
+                for (dst2, lab2, _k2) in dp.succ(src_dp):
+                    if dst2 == mux_dp and lab2 == "in":
+                        found = edge_sig[(src_dp, mux_dp, "in")]
+                        break
+
+                if found is None:
+                    raise RuntimeError(f"Wire token {tok}: cannot find dp edge {src_dp} -> {mux_dp} labeled 'in'")
+
+                token_to_expr[tok] = found
+
+
+
             # For each mux output edge, drive its wire with the selected input
             for (dst_id, out_lab, _kind) in mux_out_edges:
                 out_sig = edge_sig[(n.id, dst_id, out_lab)]
 
                 w.writeln(f"-- {n.name} mux driving {out_sig}")
-                w.writeln(f"process(all)")
+                w.writeln("process(all)")
                 w.writeln("begin")
                 w.indent()
                 w.writeln(f"case {sel_sig} is")
                 w.indent()
 
-                for i, rname in enumerate(ordered_regs):
-                    if rname not in reg_to_sig:
-                        raise RuntimeError(f"Mux {n.name}: expected reg {rname} as input, but it's not connected in dp.")
-                    w.writeln(f"when {i} => {out_sig} <= {reg_to_sig[rname]};")
+                for i, tok in enumerate(ordered_regs):
+                    if tok not in token_to_expr:
+                        raise RuntimeError(
+                            f"Mux {n.name}: expected input token '{tok}' but it is not connected/known. "
+                            f"Known={sorted(token_to_expr.keys())}"
+                        )
+                    w.writeln(f"when {i} => {out_sig} <= {token_to_expr[tok]};")
 
                 w.writeln(f"when others => {out_sig} <= (others => '0');")
                 w.dedent()
@@ -2069,7 +2199,6 @@ class UnifiedVHDLGenerator:
                 w.dedent()
                 w.writeln("end process;")
                 w.writeln("")
-
 
         # Connect datapath graph outputs into RAM ports:
         # mem_addr <= edge_sig[(mux_addr_dp -> mem_dp, "addr")]
@@ -2091,6 +2220,7 @@ class UnifiedVHDLGenerator:
         # -------------------------
         # 5) Build control table (Python-side)
         # -------------------------
+
         ctrl_gen = ControlGenerator()
         control_by_t = ctrl_gen.build_controls(dfg, schedule, binding, edge_regs, dp_info)
 

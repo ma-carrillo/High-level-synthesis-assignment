@@ -43,32 +43,6 @@ architecture rtl of hls_top_unified_13 is
   signal r14_en  : std_logic;
   signal r15_q  : signed(31 downto 0);
   signal r15_en  : std_logic;
-  signal r16_q  : signed(31 downto 0);
-  signal r16_en  : std_logic;
-  signal r17_q  : signed(31 downto 0);
-  signal r17_en  : std_logic;
-  signal r18_q  : signed(31 downto 0);
-  signal r18_en  : std_logic;
-  signal r19_q  : signed(31 downto 0);
-  signal r19_en  : std_logic;
-  signal r20_q  : signed(31 downto 0);
-  signal r20_en  : std_logic;
-  signal r21_q  : signed(31 downto 0);
-  signal r21_en  : std_logic;
-  signal r22_q  : signed(31 downto 0);
-  signal r22_en  : std_logic;
-  signal r23_q  : signed(31 downto 0);
-  signal r23_en  : std_logic;
-  signal r24_q  : signed(31 downto 0);
-  signal r24_en  : std_logic;
-  signal r25_q  : signed(31 downto 0);
-  signal r25_en  : std_logic;
-  signal r26_q  : signed(31 downto 0);
-  signal r26_en  : std_logic;
-  signal r27_q  : signed(31 downto 0);
-  signal r27_en  : std_logic;
-  signal r28_q  : signed(31 downto 0);
-  signal r28_en  : std_logic;
   
   signal sel_var_s_val : integer := 0;
   signal sel_mem_0_addr : integer := 0;
@@ -89,71 +63,49 @@ architecture rtl of hls_top_unified_13 is
   signal mem_1_din  : signed(31 downto 0);
   signal mem_1_dout : signed(31 downto 0);
   
-  signal sig_0_6 : signed(31 downto 0);
-  signal sig_0_7 : signed(31 downto 0);
-  signal sig_0_8 : signed(31 downto 0);
-  signal sig_0_15 : signed(31 downto 0);
-  signal sig_0_16 : signed(31 downto 0);
-  signal sig_0_22 : signed(31 downto 0);
-  signal sig_0_23 : signed(31 downto 0);
-  signal sig_0_29 : signed(31 downto 0);
-  signal sig_0_30 : signed(31 downto 0);
-  signal sig_1_9 : signed(31 downto 0);
-  signal sig_1_14 : signed(31 downto 0);
-  signal sig_1_21 : signed(31 downto 0);
-  signal sig_1_28 : signed(31 downto 0);
-  signal sig_2_10 : signed(31 downto 0);
-  signal sig_2_17 : signed(31 downto 0);
-  signal sig_2_24 : signed(31 downto 0);
-  signal sig_2_31 : signed(31 downto 0);
-  signal sig_3_11 : signed(31 downto 0);
-  signal sig_3_18 : signed(31 downto 0);
-  signal sig_3_25 : signed(31 downto 0);
-  signal sig_3_32 : signed(31 downto 0);
-  signal sig_4_12 : signed(31 downto 0);
-  signal sig_4_19 : signed(31 downto 0);
-  signal sig_4_26 : signed(31 downto 0);
-  signal sig_4_33 : signed(31 downto 0);
-  signal sig_5_13 : signed(31 downto 0);
-  signal sig_5_20 : signed(31 downto 0);
-  signal sig_5_27 : signed(31 downto 0);
-  signal sig_5_34 : signed(31 downto 0);
-  signal sig_6_35 : signed(31 downto 0);
-  signal sig_7_36 : signed(31 downto 0);
-  signal sig_8_37 : signed(31 downto 0);
-  signal sig_9_38 : signed(31 downto 0);
-  signal sig_10_39 : signed(31 downto 0);
-  signal sig_11_40 : signed(31 downto 0);
-  signal sig_12_41 : signed(31 downto 0);
-  signal sig_13_35 : signed(31 downto 0);
-  signal sig_14_38 : signed(31 downto 0);
-  signal sig_15_36 : signed(31 downto 0);
-  signal sig_16_37 : signed(31 downto 0);
-  signal sig_17_39 : signed(31 downto 0);
-  signal sig_18_40 : signed(31 downto 0);
-  signal sig_19_41 : signed(31 downto 0);
-  signal sig_20_35 : signed(31 downto 0);
-  signal sig_21_38 : signed(31 downto 0);
-  signal sig_22_36 : signed(31 downto 0);
-  signal sig_23_37 : signed(31 downto 0);
-  signal sig_24_39 : signed(31 downto 0);
-  signal sig_25_40 : signed(31 downto 0);
-  signal sig_26_41 : signed(31 downto 0);
-  signal sig_27_35 : signed(31 downto 0);
-  signal sig_28_38 : signed(31 downto 0);
-  signal sig_29_36 : signed(31 downto 0);
-  signal sig_30_37 : signed(31 downto 0);
-  signal sig_31_39 : signed(31 downto 0);
-  signal sig_32_40 : signed(31 downto 0);
-  signal sig_33_41 : signed(31 downto 0);
-  signal sig_34_35 : signed(31 downto 0);
-  signal sig_35_1 : signed(31 downto 0);
-  signal sig_36_2 : signed(31 downto 0);
-  signal sig_37_3 : signed(31 downto 0);
-  signal sig_38_5 : signed(31 downto 0);
-  signal sig_39_4 : signed(31 downto 0);
-  signal sig_40_4 : signed(31 downto 0);
-  signal sig_41_5 : signed(31 downto 0);
+  signal sig_0_22_in : signed(31 downto 0);
+  signal sig_0_23_in : signed(31 downto 0);
+  signal sig_0_24_in : signed(31 downto 0);
+  signal sig_1_25_in : signed(31 downto 0);
+  signal sig_2_6_d : signed(31 downto 0);
+  signal sig_2_10_d : signed(31 downto 0);
+  signal sig_2_14_d : signed(31 downto 0);
+  signal sig_2_18_d : signed(31 downto 0);
+  signal sig_3_7_d : signed(31 downto 0);
+  signal sig_3_11_d : signed(31 downto 0);
+  signal sig_3_15_d : signed(31 downto 0);
+  signal sig_3_19_d : signed(31 downto 0);
+  signal sig_4_8_d : signed(31 downto 0);
+  signal sig_4_12_d : signed(31 downto 0);
+  signal sig_4_16_d : signed(31 downto 0);
+  signal sig_4_20_d : signed(31 downto 0);
+  signal sig_5_9_d : signed(31 downto 0);
+  signal sig_5_13_d : signed(31 downto 0);
+  signal sig_5_17_d : signed(31 downto 0);
+  signal sig_5_21_d : signed(31 downto 0);
+  signal sig_6_26_in : signed(31 downto 0);
+  signal sig_7_27_in : signed(31 downto 0);
+  signal sig_8_28_in : signed(31 downto 0);
+  signal sig_9_22_in : signed(31 downto 0);
+  signal sig_10_26_in : signed(31 downto 0);
+  signal sig_11_27_in : signed(31 downto 0);
+  signal sig_12_28_in : signed(31 downto 0);
+  signal sig_13_22_in : signed(31 downto 0);
+  signal sig_14_26_in : signed(31 downto 0);
+  signal sig_15_27_in : signed(31 downto 0);
+  signal sig_16_28_in : signed(31 downto 0);
+  signal sig_17_22_in : signed(31 downto 0);
+  signal sig_18_26_in : signed(31 downto 0);
+  signal sig_19_27_in : signed(31 downto 0);
+  signal sig_20_28_in : signed(31 downto 0);
+  signal sig_21_22_in : signed(31 downto 0);
+  signal sig_22_1_val : signed(31 downto 0);
+  signal sig_23_2_addr : signed(31 downto 0);
+  signal sig_24_3_addr : signed(31 downto 0);
+  signal sig_25_5_in0 : signed(31 downto 0);
+  signal sig_26_4_in0 : signed(31 downto 0);
+  signal sig_27_4_in1 : signed(31 downto 0);
+  signal sig_28_5_in1 : signed(31 downto 0);
   
   signal var_s_en : std_logic;
   signal var_s_d  : signed(31 downto 0);
@@ -162,7 +114,7 @@ architecture rtl of hls_top_unified_13 is
   signal mul_0_y : signed(31 downto 0);
   signal add_0_y : signed(31 downto 0);
   
-  signal state : integer range 0 to 14 := 0;
+  signal state : integer range 0 to 10 := 0;
   
   -- Component declarations (assumed to exist)
   component Reg32 is
@@ -209,184 +161,103 @@ begin
     q   => var_s_q
   );
   
-  sig_1_9 <= var_s_q;
-  sig_1_14 <= var_s_q;
-  sig_1_21 <= var_s_q;
-  sig_1_28 <= var_s_q;
+  sig_1_25_in <= var_s_q;
   
   U_r0: Reg32 port map(
     clk => clk,
     en  => r0_en,
-    d   => sig_0_6,
+    d   => sig_2_6_d,
     q   => r0_q
   );
   U_r1: Reg32 port map(
     clk => clk,
     en  => r1_en,
-    d   => sig_0_7,
+    d   => sig_3_7_d,
     q   => r1_q
   );
   U_r2: Reg32 port map(
     clk => clk,
     en  => r2_en,
-    d   => sig_0_8,
+    d   => sig_4_8_d,
     q   => r2_q
   );
   U_r3: Reg32 port map(
     clk => clk,
     en  => r3_en,
-    d   => sig_1_9,
+    d   => sig_5_9_d,
     q   => r3_q
   );
   U_r4: Reg32 port map(
     clk => clk,
     en  => r4_en,
-    d   => sig_2_10,
+    d   => sig_2_10_d,
     q   => r4_q
   );
   U_r5: Reg32 port map(
     clk => clk,
     en  => r5_en,
-    d   => sig_3_11,
+    d   => sig_3_11_d,
     q   => r5_q
   );
   U_r6: Reg32 port map(
     clk => clk,
     en  => r6_en,
-    d   => sig_4_12,
+    d   => sig_4_12_d,
     q   => r6_q
   );
   U_r7: Reg32 port map(
     clk => clk,
     en  => r7_en,
-    d   => sig_5_13,
+    d   => sig_5_13_d,
     q   => r7_q
   );
   U_r8: Reg32 port map(
     clk => clk,
     en  => r8_en,
-    d   => sig_1_14,
+    d   => sig_2_14_d,
     q   => r8_q
   );
   U_r9: Reg32 port map(
     clk => clk,
     en  => r9_en,
-    d   => sig_0_15,
+    d   => sig_3_15_d,
     q   => r9_q
   );
   U_r10: Reg32 port map(
     clk => clk,
     en  => r10_en,
-    d   => sig_0_16,
+    d   => sig_4_16_d,
     q   => r10_q
   );
   U_r11: Reg32 port map(
     clk => clk,
     en  => r11_en,
-    d   => sig_2_17,
+    d   => sig_5_17_d,
     q   => r11_q
   );
   U_r12: Reg32 port map(
     clk => clk,
     en  => r12_en,
-    d   => sig_3_18,
+    d   => sig_2_18_d,
     q   => r12_q
   );
   U_r13: Reg32 port map(
     clk => clk,
     en  => r13_en,
-    d   => sig_4_19,
+    d   => sig_3_19_d,
     q   => r13_q
   );
   U_r14: Reg32 port map(
     clk => clk,
     en  => r14_en,
-    d   => sig_5_20,
+    d   => sig_4_20_d,
     q   => r14_q
   );
   U_r15: Reg32 port map(
     clk => clk,
     en  => r15_en,
-    d   => sig_1_21,
+    d   => sig_5_21_d,
     q   => r15_q
-  );
-  U_r16: Reg32 port map(
-    clk => clk,
-    en  => r16_en,
-    d   => sig_0_22,
-    q   => r16_q
-  );
-  U_r17: Reg32 port map(
-    clk => clk,
-    en  => r17_en,
-    d   => sig_0_23,
-    q   => r17_q
-  );
-  U_r18: Reg32 port map(
-    clk => clk,
-    en  => r18_en,
-    d   => sig_2_24,
-    q   => r18_q
-  );
-  U_r19: Reg32 port map(
-    clk => clk,
-    en  => r19_en,
-    d   => sig_3_25,
-    q   => r19_q
-  );
-  U_r20: Reg32 port map(
-    clk => clk,
-    en  => r20_en,
-    d   => sig_4_26,
-    q   => r20_q
-  );
-  U_r21: Reg32 port map(
-    clk => clk,
-    en  => r21_en,
-    d   => sig_5_27,
-    q   => r21_q
-  );
-  U_r22: Reg32 port map(
-    clk => clk,
-    en  => r22_en,
-    d   => sig_1_28,
-    q   => r22_q
-  );
-  U_r23: Reg32 port map(
-    clk => clk,
-    en  => r23_en,
-    d   => sig_0_29,
-    q   => r23_q
-  );
-  U_r24: Reg32 port map(
-    clk => clk,
-    en  => r24_en,
-    d   => sig_0_30,
-    q   => r24_q
-  );
-  U_r25: Reg32 port map(
-    clk => clk,
-    en  => r25_en,
-    d   => sig_2_31,
-    q   => r25_q
-  );
-  U_r26: Reg32 port map(
-    clk => clk,
-    en  => r26_en,
-    d   => sig_3_32,
-    q   => r26_q
-  );
-  U_r27: Reg32 port map(
-    clk => clk,
-    en  => r27_en,
-    d   => sig_4_33,
-    q   => r27_q
-  );
-  U_r28: Reg32 port map(
-    clk => clk,
-    en  => r28_en,
-    d   => sig_5_34,
-    q   => r28_q
   );
   
   U_mem_0: RamSimple
@@ -433,124 +304,115 @@ begin
       dout => mem_1_dout
     );
   
-  U_mul_0: Mul32 port map(a => sig_39_4, b => sig_40_4, y => mul_0_y);
-  sig_4_12 <= mul_0_y;
-  sig_4_19 <= mul_0_y;
-  sig_4_26 <= mul_0_y;
-  sig_4_33 <= mul_0_y;
-  U_add_0: Adder32 port map(a => sig_38_5, b => sig_41_5, y => add_0_y);
-  sig_5_13 <= add_0_y;
-  sig_5_20 <= add_0_y;
-  sig_5_27 <= add_0_y;
-  sig_5_34 <= add_0_y;
+  U_mul_0: Mul32 port map(a => sig_26_4_in0, b => sig_27_4_in1, y => mul_0_y);
+  sig_4_8_d <= mul_0_y;
+  sig_4_12_d <= mul_0_y;
+  sig_4_16_d <= mul_0_y;
+  sig_4_20_d <= mul_0_y;
+  U_add_0: Adder32 port map(a => sig_25_5_in0, b => sig_28_5_in1, y => add_0_y);
+  sig_5_9_d <= add_0_y;
+  sig_5_13_d <= add_0_y;
+  sig_5_17_d <= add_0_y;
+  sig_5_21_d <= add_0_y;
   
-  var_s_d <= sig_35_1;
-  sig_0_6 <= to_signed(0, 32);
-  sig_0_7 <= to_signed(0, 32);
-  sig_0_8 <= to_signed(0, 32);
-  sig_0_15 <= to_signed(1, 32);
-  sig_0_16 <= to_signed(1, 32);
-  sig_0_22 <= to_signed(2, 32);
-  sig_0_23 <= to_signed(2, 32);
-  sig_0_29 <= to_signed(3, 32);
-  sig_0_30 <= to_signed(3, 32);
+  var_s_d <= sig_22_1_val;
   
-  sig_2_10 <= mem_0_dout;
-  sig_2_17 <= mem_0_dout;
-  sig_2_24 <= mem_0_dout;
-  sig_2_31 <= mem_0_dout;
-  sig_3_11 <= mem_1_dout;
-  sig_3_18 <= mem_1_dout;
-  sig_3_25 <= mem_1_dout;
-  sig_3_32 <= mem_1_dout;
+  sig_2_6_d <= mem_0_dout;
+  sig_2_10_d <= mem_0_dout;
+  sig_2_14_d <= mem_0_dout;
+  sig_2_18_d <= mem_0_dout;
+  sig_3_7_d <= mem_1_dout;
+  sig_3_11_d <= mem_1_dout;
+  sig_3_15_d <= mem_1_dout;
+  sig_3_19_d <= mem_1_dout;
   
-  -- var_s_val mux driving sig_35_1
+  -- var_s_val mux driving sig_22_1_val
   process(all)
   begin
     case sel_var_s_val is
-      when 0 => sig_35_1 <= r0_q;
-      when 1 => sig_35_1 <= r7_q;
-      when 2 => sig_35_1 <= r14_q;
-      when 3 => sig_35_1 <= r21_q;
-      when 4 => sig_35_1 <= r28_q;
-      when others => sig_35_1 <= (others => '0');
+      when 0 => sig_22_1_val <= to_signed(0, 32);
+      when 1 => sig_22_1_val <= r3_q;
+      when 2 => sig_22_1_val <= r7_q;
+      when 3 => sig_22_1_val <= r11_q;
+      when 4 => sig_22_1_val <= r15_q;
+      when others => sig_22_1_val <= (others => '0');
     end case;
   end process;
   
-  -- mem_0_addr mux driving sig_36_2
+  -- mem_0_addr mux driving sig_23_2_addr
   process(all)
   begin
     case sel_mem_0_addr is
-      when 0 => sig_36_2 <= r1_q;
-      when 1 => sig_36_2 <= r9_q;
-      when 2 => sig_36_2 <= r16_q;
-      when 3 => sig_36_2 <= r23_q;
-      when others => sig_36_2 <= (others => '0');
+      when 0 => sig_23_2_addr <= to_signed(0, 32);
+      when 1 => sig_23_2_addr <= to_signed(1, 32);
+      when 2 => sig_23_2_addr <= to_signed(2, 32);
+      when 3 => sig_23_2_addr <= to_signed(3, 32);
+      when others => sig_23_2_addr <= (others => '0');
     end case;
   end process;
   
-  -- mem_1_addr mux driving sig_37_3
+  -- mem_1_addr mux driving sig_24_3_addr
   process(all)
   begin
     case sel_mem_1_addr is
-      when 0 => sig_37_3 <= r2_q;
-      when 1 => sig_37_3 <= r10_q;
-      when 2 => sig_37_3 <= r17_q;
-      when 3 => sig_37_3 <= r24_q;
-      when others => sig_37_3 <= (others => '0');
+      when 0 => sig_24_3_addr <= to_signed(0, 32);
+      when 1 => sig_24_3_addr <= to_signed(1, 32);
+      when 2 => sig_24_3_addr <= to_signed(2, 32);
+      when 3 => sig_24_3_addr <= to_signed(3, 32);
+      when others => sig_24_3_addr <= (others => '0');
     end case;
   end process;
   
-  -- add_0_in0 mux driving sig_38_5
+  -- add_0_in0 mux driving sig_25_5_in0
   process(all)
   begin
     case sel_add_0_in0 is
-      when 0 => sig_38_5 <= r3_q;
-      when 1 => sig_38_5 <= r8_q;
-      when 2 => sig_38_5 <= r15_q;
-      when 3 => sig_38_5 <= r22_q;
-      when others => sig_38_5 <= (others => '0');
+      when 0 => sig_25_5_in0 <= var_s_q;
+      when 1 => sig_25_5_in0 <= var_s_q;
+      when 2 => sig_25_5_in0 <= var_s_q;
+      when 3 => sig_25_5_in0 <= var_s_q;
+      when others => sig_25_5_in0 <= (others => '0');
     end case;
   end process;
   
-  -- mul_0_in0 mux driving sig_39_4
+  -- mul_0_in0 mux driving sig_26_4_in0
   process(all)
   begin
     case sel_mul_0_in0 is
-      when 0 => sig_39_4 <= r4_q;
-      when 1 => sig_39_4 <= r11_q;
-      when 2 => sig_39_4 <= r18_q;
-      when 3 => sig_39_4 <= r25_q;
-      when others => sig_39_4 <= (others => '0');
+      when 0 => sig_26_4_in0 <= r0_q;
+      when 1 => sig_26_4_in0 <= r4_q;
+      when 2 => sig_26_4_in0 <= r8_q;
+      when 3 => sig_26_4_in0 <= r12_q;
+      when others => sig_26_4_in0 <= (others => '0');
     end case;
   end process;
   
-  -- mul_0_in1 mux driving sig_40_4
+  -- mul_0_in1 mux driving sig_27_4_in1
   process(all)
   begin
     case sel_mul_0_in1 is
-      when 0 => sig_40_4 <= r5_q;
-      when 1 => sig_40_4 <= r12_q;
-      when 2 => sig_40_4 <= r19_q;
-      when 3 => sig_40_4 <= r26_q;
-      when others => sig_40_4 <= (others => '0');
+      when 0 => sig_27_4_in1 <= r1_q;
+      when 1 => sig_27_4_in1 <= r5_q;
+      when 2 => sig_27_4_in1 <= r9_q;
+      when 3 => sig_27_4_in1 <= r13_q;
+      when others => sig_27_4_in1 <= (others => '0');
     end case;
   end process;
   
-  -- add_0_in1 mux driving sig_41_5
+  -- add_0_in1 mux driving sig_28_5_in1
   process(all)
   begin
     case sel_add_0_in1 is
-      when 0 => sig_41_5 <= r6_q;
-      when 1 => sig_41_5 <= r13_q;
-      when 2 => sig_41_5 <= r20_q;
-      when 3 => sig_41_5 <= r27_q;
-      when others => sig_41_5 <= (others => '0');
+      when 0 => sig_28_5_in1 <= r2_q;
+      when 1 => sig_28_5_in1 <= r6_q;
+      when 2 => sig_28_5_in1 <= r10_q;
+      when 3 => sig_28_5_in1 <= r14_q;
+      when others => sig_28_5_in1 <= (others => '0');
     end case;
   end process;
   
-  mem_0_addr <= sig_36_2;
-  mem_1_addr <= sig_37_3;
+  mem_0_addr <= sig_23_2_addr;
+  mem_1_addr <= sig_24_3_addr;
   
   -- State register
   process(clk)
@@ -570,11 +432,7 @@ begin
           when 7 => state <= 8;
           when 8 => state <= 9;
           when 9 => state <= 10;
-          when 10 => state <= 11;
-          when 11 => state <= 12;
-          when 12 => state <= 13;
-          when 13 => state <= 14;
-          when 14 => state <= 14;
+          when 10 => state <= 10;
           when others => state <= 0;
         end case;
       end if;
@@ -592,20 +450,7 @@ begin
     r13_en <= '0';
     r14_en <= '0';
     r15_en <= '0';
-    r16_en <= '0';
-    r17_en <= '0';
-    r18_en <= '0';
-    r19_en <= '0';
     r2_en <= '0';
-    r20_en <= '0';
-    r21_en <= '0';
-    r22_en <= '0';
-    r23_en <= '0';
-    r24_en <= '0';
-    r25_en <= '0';
-    r26_en <= '0';
-    r27_en <= '0';
-    r28_en <= '0';
     r3_en <= '0';
     r4_en <= '0';
     r5_en <= '0';
@@ -631,38 +476,27 @@ begin
       when 0 =>
         r0_en <= '1';
         r1_en <= '1';
-        r10_en <= '1';
-        r16_en <= '1';
-        r17_en <= '1';
-        r2_en <= '1';
-        r23_en <= '1';
-        r24_en <= '1';
-        r9_en <= '1';
-      when 1 =>
-        r4_en <= '1';
-        r5_en <= '1';
         sel_mem_0_addr <= 0;
         sel_mem_1_addr <= 0;
         sel_var_s_val <= 0;
         mem_0_en <= '1';
         mem_1_en <= '1';
         var_s_en <= '1';
-      when 2 =>
-        r11_en <= '1';
-        r12_en <= '1';
-        r3_en <= '1';
-        r6_en <= '1';
+      when 1 =>
+        r2_en <= '1';
+        r4_en <= '1';
+        r5_en <= '1';
         sel_mem_0_addr <= 1;
         sel_mem_1_addr <= 1;
         sel_mul_0_in0 <= 0;
         sel_mul_0_in1 <= 0;
         mem_0_en <= '1';
         mem_1_en <= '1';
-      when 3 =>
-        r13_en <= '1';
-        r18_en <= '1';
-        r19_en <= '1';
-        r7_en <= '1';
+      when 2 =>
+        r3_en <= '1';
+        r6_en <= '1';
+        r8_en <= '1';
+        r9_en <= '1';
         sel_add_0_in0 <= 0;
         sel_add_0_in1 <= 0;
         sel_mem_0_addr <= 2;
@@ -671,10 +505,10 @@ begin
         sel_mul_0_in1 <= 1;
         mem_0_en <= '1';
         mem_1_en <= '1';
-      when 4 =>
-        r20_en <= '1';
-        r25_en <= '1';
-        r26_en <= '1';
+      when 3 =>
+        r10_en <= '1';
+        r12_en <= '1';
+        r13_en <= '1';
         sel_mem_0_addr <= 3;
         sel_mem_1_addr <= 3;
         sel_mul_0_in0 <= 2;
@@ -683,37 +517,31 @@ begin
         mem_0_en <= '1';
         mem_1_en <= '1';
         var_s_en <= '1';
-      when 5 =>
-        r27_en <= '1';
-        r8_en <= '1';
-        sel_mul_0_in0 <= 3;
-        sel_mul_0_in1 <= 3;
-      when 6 =>
+      when 4 =>
         r14_en <= '1';
+        r7_en <= '1';
         sel_add_0_in0 <= 1;
         sel_add_0_in1 <= 1;
-      when 7 =>
+        sel_mul_0_in0 <= 3;
+        sel_mul_0_in1 <= 3;
+      when 5 =>
         sel_var_s_val <= 2;
+        var_s_en <= '1';
+      when 6 =>
+        r11_en <= '1';
+        sel_add_0_in0 <= 2;
+        sel_add_0_in1 <= 2;
+      when 7 =>
+        sel_var_s_val <= 3;
         var_s_en <= '1';
       when 8 =>
         r15_en <= '1';
-      when 9 =>
-        r21_en <= '1';
-        sel_add_0_in0 <= 2;
-        sel_add_0_in1 <= 2;
-      when 10 =>
-        sel_var_s_val <= 3;
-        var_s_en <= '1';
-      when 11 =>
-        r22_en <= '1';
-      when 12 =>
-        r28_en <= '1';
         sel_add_0_in0 <= 3;
         sel_add_0_in1 <= 3;
-      when 13 =>
+      when 9 =>
         sel_var_s_val <= 4;
         var_s_en <= '1';
-      when 14 =>
+      when 10 =>
         done <= '1';
       when others => null;
     end case;

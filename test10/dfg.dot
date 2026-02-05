@@ -1,7 +1,7 @@
 digraph "dfg" {
-  n0 [label="Cst(0)"];
+  n0 [label="Cst(4)"];
   n1 [label="ST(i)"];
-  n2 [label="Cst(1)"];
+  n2 [label="Cst(5)"];
   n3 [label="ST(j)"];
   n4 [label="LD(i)"];
   n5 [label="LD(j)"];

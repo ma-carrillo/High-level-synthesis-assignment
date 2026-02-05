@@ -3,9 +3,9 @@ digraph "cfg" {
   subgraph "cluster_bb0" {
     label="entry";
     style=rounded;
-    bb0_n0 [label="Cst(0)"];
+    bb0_n0 [label="Cst(4)"];
     bb0_n1 [label="ST(i)"];
-    bb0_n2 [label="Cst(1)"];
+    bb0_n2 [label="Cst(5)"];
     bb0_n3 [label="ST(j)"];
     bb0_n4 [label="LD(i)"];
     bb0_n5 [label="LD(j)"];
