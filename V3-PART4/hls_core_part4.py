@@ -820,9 +820,12 @@ class Scheduler:
     def schedule_dfg(self, dfg):
         # latency per node
         def latency(n):
+            # Spec: Cst and register load are combinational (0-cycle)
             if isinstance(n, (DFGCst, DFGRegLoad)):
                 return 0
+            # Add/Mul/RAM ops/RegStore take a cycle in your FSM model
             return 1
+
 
         # resource classification (for per-cycle conflicts)
         def op_resource(nid):

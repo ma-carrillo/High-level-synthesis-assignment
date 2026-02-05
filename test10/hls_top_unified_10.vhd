@@ -52,7 +52,7 @@ architecture rtl of hls_top_unified_10 is
   
   signal add_0_y : signed(31 downto 0);
   
-  signal state : integer range 0 to 3 := 0;
+  signal state : integer range 0 to 5 := 0;
   
   -- Component declarations (assumed to exist)
   component Reg32 is
@@ -197,7 +197,9 @@ begin
           when 0 => state <= 1;
           when 1 => state <= 2;
           when 2 => state <= 3;
-          when 3 => state <= 3;
+          when 3 => state <= 4;
+          when 4 => state <= 5;
+          when 5 => state <= 5;
           when others => state <= 0;
         end case;
       end if;
@@ -224,20 +226,22 @@ begin
       when 0 =>
         r0_en <= '1';
         r1_en <= '1';
+      when 1 =>
         sel_var_i_val <= 0;
         sel_var_j_val <= 0;
         var_i_en <= '1';
         var_j_en <= '1';
-      when 1 =>
+      when 2 =>
         r2_en <= '1';
         r3_en <= '1';
+      when 3 =>
         r4_en <= '1';
         sel_add_0_in0 <= 0;
         sel_add_0_in1 <= 0;
-      when 2 =>
+      when 4 =>
         sel_var_i_val <= 1;
         var_i_en <= '1';
-      when 3 =>
+      when 5 =>
         done <= '1';
       when others => null;
     end case;
