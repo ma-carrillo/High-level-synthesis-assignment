@@ -6,13 +6,13 @@ from hls_core_part42 import (
     ASTToCDFG, Scheduler, ResourceBinder, RegisterAllocator,
     DatapathBuilder, UnifiedVHDLGenerator, DotPrinter,
     print_schedule, print_binding, print_edge_registers,
-    print_datapath, DatapathDotPrinter, Assign, Var
+    print_datapath, DatapathDotPrinter, Assign, Var, For
 )
 
 # =========================
 # Global output folder
 # =========================
-OUT_DIR = Path("test10") 
+OUT_DIR = Path("test13") 
 
 
 def out_path(filename: str) -> Path:
@@ -37,24 +37,34 @@ def write_text(filename: str, text: str) -> None:
 
 if __name__ == "__main__":
 
-    # One RAM
-    ram = Mem(4, init=[7, 5, 11, 0])
+    # Two RAMs
+    vecA = Mem(4, init=[7, 5, 11, 0])
+    vecB = Mem(4, init=[1, 2, 3, 4])   # example values
 
     # ----------------------------------------------------------
-    # Simple variable test
+    # Dot product:
     #
-    # i = new Register;
-    # j = new Register;
-    # i = 0;
-    # j = 1;
-    # i = i + j;
+    # s = new Register;
+    # s = 0;
+    # for (i=0..3) {   // 4 iterations
+    #     s = s + vecA[i] * vecB[i];
+    # }
     # ----------------------------------------------------------
     prog = Block([
-        Assign("i", Cst(0)),
-        Assign("j", Cst(1)),
-        Assign("i", Add(Var("i"), Var("j"))),
+        Assign("s", Cst(0)),
+        For(Var("i"), 4,
+            Assign(
+                "s",
+                Add(
+                    Var("s"),
+                    Mul(
+                        Load(vecA, Var("i")),
+                        Load(vecB, Var("i")),
+                    ),
+                ),
+            ),
+        ),
     ])
-
 
 
     print("\n=== INTERPRETER TEST ===")
@@ -62,8 +72,12 @@ if __name__ == "__main__":
     interp = Interpreter()
     interp.run(prog)
 
-    print("Full RAM state =", interp.dump_mem(ram))
-    print("i =", interp.load_var("i"))
+    print("Full vecA state =", interp.dump_mem(vecA))
+
+    print("Full vecB state =", interp.dump_mem(vecB))
+
+    print("s =", interp.load_var("s"))
+
 
     print("\n\n\n")
 
@@ -146,15 +160,22 @@ if __name__ == "__main__":
         print(f"  mux for {res.instance}.{portlab}: {reg_list}")
 
     # 8) Generate FULL unified VHDL (datapath + muxes + FSM control)
-    gen = UnifiedVHDLGenerator(top_name="hls_top_unified_10")
+    gen = UnifiedVHDLGenerator(top_name="hls_top_unified_13")
     vhdl = gen.generate_full(dfg, dp, schedule, binding, edge_regs, dp_info)
 
-    write_text("hls_top_unified_10.vhd", vhdl)
+    write_text("hls_top_unified_13.vhd", vhdl)
 
-    print(f"\nWrote: {out_path('hls_top_unified_10.vhd')}")
+    print(f"\nWrote: {out_path('hls_top_unified_13.vhd')}")
     print("This file includes:")
     print("  - datapath structural instantiations (regs/RAM/add/mul)")
     print("  - mux combinational logic")
     print("  - FSM control (reg enables, mux selects, mem ctrl)")
+
+
+    print("Scheduler class:", Scheduler, "from", Scheduler.__module__)
+    n = dfg.node(3)
+    print("Node3 type:", type(n), "module:", type(n).__module__)
+
+
 
 

@@ -50,6 +50,8 @@ architecture rtl of hls_top_unified_10 is
   signal var_j_d  : signed(31 downto 0);
   signal var_j_q  : signed(31 downto 0);
   
+  signal add_0_y : signed(31 downto 0);
+  
   signal state : integer range 0 to 5 := 0;
   
   -- Component declarations (assumed to exist)
@@ -137,7 +139,8 @@ begin
     q   => r4_q
   );
   
-  U_add_0: Adder32 port map(a => sig_11_3, b => sig_12_3, y => sig_3_8);
+  U_add_0: Adder32 port map(a => sig_11_3, b => sig_12_3, y => add_0_y);
+  sig_3_8 <= add_0_y;
   
   var_i_d <= sig_9_1;
   var_j_d <= sig_10_2;

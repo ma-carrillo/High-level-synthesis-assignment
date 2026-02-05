@@ -6,13 +6,13 @@ from hls_core_part42 import (
     ASTToCDFG, Scheduler, ResourceBinder, RegisterAllocator,
     DatapathBuilder, UnifiedVHDLGenerator, DotPrinter,
     print_schedule, print_binding, print_edge_registers,
-    print_datapath, DatapathDotPrinter, Assign, Var
+    print_datapath, DatapathDotPrinter, Assign, Var, For
 )
 
 # =========================
 # Global output folder
 # =========================
-OUT_DIR = Path("test10") 
+OUT_DIR = Path("test12") 
 
 
 def out_path(filename: str) -> Path:
@@ -41,18 +41,19 @@ if __name__ == "__main__":
     ram = Mem(4, init=[7, 5, 11, 0])
 
     # ----------------------------------------------------------
-    # Simple variable test
+    # Sum of array using a For loop:
     #
-    # i = new Register;
-    # j = new Register;
-    # i = 0;
-    # j = 1;
-    # i = i + j;
+    # s = new Register;
+    # s = 0;
+    # for (i=0..3) {   // 4 iterations
+    #     s = s + A[i];
+    # }
     # ----------------------------------------------------------
     prog = Block([
-        Assign("i", Cst(0)),
-        Assign("j", Cst(1)),
-        Assign("i", Add(Var("i"), Var("j"))),
+        Assign("s", Cst(0)),
+        For(Var("i"), 4,
+            Assign("s", Add(Var("s"), Load(ram, Var("i"))))
+        ),
     ])
 
 
@@ -63,7 +64,8 @@ if __name__ == "__main__":
     interp.run(prog)
 
     print("Full RAM state =", interp.dump_mem(ram))
-    print("i =", interp.load_var("i"))
+    print("s =", interp.load_var("s"))
+
 
     print("\n\n\n")
 
@@ -98,7 +100,7 @@ if __name__ == "__main__":
         mem_entity="RamSimple",
         cst_entity="Const"
     )
-    binding, resources = binder.bind(dfg, schedule)
+    binding, resources = binder.bind(dfg,schedule)
 
     print("\n=== Resource Binding ===")
     print_binding(dfg, schedule, binding)
@@ -146,12 +148,12 @@ if __name__ == "__main__":
         print(f"  mux for {res.instance}.{portlab}: {reg_list}")
 
     # 8) Generate FULL unified VHDL (datapath + muxes + FSM control)
-    gen = UnifiedVHDLGenerator(top_name="hls_top_unified_10")
+    gen = UnifiedVHDLGenerator(top_name="hls_top_unified_12")
     vhdl = gen.generate_full(dfg, dp, schedule, binding, edge_regs, dp_info)
 
-    write_text("hls_top_unified_10.vhd", vhdl)
+    write_text("hls_top_unified_12.vhd", vhdl)
 
-    print(f"\nWrote: {out_path('hls_top_unified_10.vhd')}")
+    print(f"\nWrote: {out_path('hls_top_unified_12.vhd')}")
     print("This file includes:")
     print("  - datapath structural instantiations (regs/RAM/add/mul)")
     print("  - mux combinational logic")
