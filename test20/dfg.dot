@@ -1,0 +1,18 @@
+digraph "dfg" {
+  n0 [label="Cst(4)"];
+  n1 [label="ST(i)"];
+  n2 [label="Cst(5)"];
+  n3 [label="ST(j)"];
+  n4 [label="LD(i)"];
+  n5 [label="LD(j)"];
+  n6 [label="DFGAdd"];
+  n7 [label="ST(i)"];
+  n0 -> n1 [label="val"];
+  n1 -> n4 [style="dashed"];
+  n2 -> n3 [label="val"];
+  n3 -> n5 [style="dashed"];
+  n4 -> n6 [label="in0"];
+  n4 -> n7 [style="dashed"];
+  n5 -> n6 [label="in1"];
+  n6 -> n7 [label="val"];
+}

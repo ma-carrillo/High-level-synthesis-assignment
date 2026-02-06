@@ -1,0 +1,34 @@
+digraph "dfg" {
+  n0 [label="Cst(0)"];
+  n1 [label="ST(s)"];
+  n2 [label="LD(s)"];
+  n3 [label="DFGAdd"];
+  n4 [label="ST(s)"];
+  n6 [label="Cst(1)"];
+  n7 [label="DFGAdd"];
+  n8 [label="ST(s)"];
+  n10 [label="Cst(2)"];
+  n11 [label="DFGAdd"];
+  n12 [label="ST(s)"];
+  n14 [label="Cst(3)"];
+  n15 [label="DFGAdd"];
+  n16 [label="ST(s)"];
+  n0 -> n1 [label="val"];
+  n0 -> n3 [label="in1"];
+  n1 -> n2 [style="dashed"];
+  n2 -> n3 [label="in0"];
+  n2 -> n4 [style="dashed"];
+  n2 -> n7 [label="in0"];
+  n2 -> n8 [style="dashed"];
+  n2 -> n11 [label="in0"];
+  n2 -> n12 [style="dashed"];
+  n2 -> n15 [label="in0"];
+  n2 -> n16 [style="dashed"];
+  n3 -> n4 [label="val"];
+  n6 -> n7 [label="in1"];
+  n7 -> n8 [label="val"];
+  n10 -> n11 [label="in1"];
+  n11 -> n12 [label="val"];
+  n14 -> n15 [label="in1"];
+  n15 -> n16 [label="val"];
+}

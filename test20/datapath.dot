@@ -1,0 +1,19 @@
+digraph "datapath" {
+  n0 [label="cst:cst"];
+  n1 [label="var_i:var"];
+  n2 [label="var_j:var"];
+  n3 [label="add_0:add"];
+  n4 [label="MUX(var_i_val)"];
+  n5 [label="MUX(var_j_val)"];
+  n6 [label="MUX(add_0_in0)"];
+  n7 [label="MUX(add_0_in1)"];
+  n0 -> n4 [label="in"];
+  n0 -> n5 [label="in"];
+  n1 -> n6 [label="in"];
+  n2 -> n7 [label="in"];
+  n3 -> n4 [label="in"];
+  n4 -> n1 [label="val"];
+  n5 -> n2 [label="val"];
+  n6 -> n3 [label="in0"];
+  n7 -> n3 [label="in1"];
+}
