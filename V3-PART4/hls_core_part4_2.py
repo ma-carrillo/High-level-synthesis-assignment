@@ -1109,6 +1109,8 @@ class Scheduler:
                 # Even if we scheduled something, we still advance to next cycle for next wave of work
                 cycle += 1
 
+        dfg._schedule = dict(time_of)   # attach schedule for later passes
+
         return time_of
 
 
@@ -1357,8 +1359,17 @@ class RegisterAllocator:
                 # === OPTION B CORE CHANGE ===
                 # If the producer is combinational (Cst or RegLoad),
                 # do NOT allocate an edge register. Let it be a direct wire.
-                if isinstance(src_node, (DFGCst, DFGRegLoad, DFGAdd, DFGMul)):
+                sched = getattr(dfg, "_schedule", None)
+
+                # Always bypass true sources
+                if isinstance(src_node, (DFGCst, DFGRegLoad)):
                     continue
+
+                # Allow chaining bypass for Add/Mul ONLY if same-cycle as its consumer
+                if isinstance(src_node, (DFGAdd, DFGMul)) and sched is not None:
+                    if sched.get(src.id) == sched.get(dst_id):
+                        continue
+
 
                 key = (src.id, dst_id, lab)
                 edge_regs[key] = self._new_reg()
