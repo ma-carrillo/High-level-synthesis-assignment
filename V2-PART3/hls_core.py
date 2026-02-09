@@ -1350,7 +1350,6 @@ class ControlGenerator:
 
         return control_by_t
 
-
 class UnifiedVHDLGenerator:
     """
     Single unified generator:
@@ -1358,6 +1357,13 @@ class UnifiedVHDLGenerator:
       - Instantiates datapath components (Reg32, RamSimple, Adder32, Mul32)
       - Generates mux combinational logic (one process per mux)
       - Generates FSM control (enables, mem en/we/addr/din, mux selects)
+
+    NOTE:
+      Top-level VHDL emitted by this generator uses ONLY:
+        - library ieee;
+        - use ieee.std_logic_1164.all;
+      All datapath values are std_logic_vector(31 downto 0).
+      Arithmetic and address interpretation (if needed) must be handled inside components.
     """
 
     def __init__(self, top_name="hls_top"):
@@ -1383,7 +1389,6 @@ class UnifiedVHDLGenerator:
         # -------------------------
         w.writeln("library ieee;")
         w.writeln("use ieee.std_logic_1164.all;")
-        w.writeln("use ieee.numeric_std.all;")
         w.writeln("")
         w.writeln(f"entity {self.top_name} is")
         w.indent()
@@ -1419,7 +1424,7 @@ class UnifiedVHDLGenerator:
                 en = f"{rname}_en"
                 reg_q[rname] = qn
                 reg_en[rname] = en
-                w.writeln(f"signal {qn}  : signed(31 downto 0);")
+                w.writeln(f"signal {qn}  : std_logic_vector(31 downto 0);")
                 w.writeln(f"signal {en}  : std_logic;")
         w.writeln("")
 
@@ -1447,9 +1452,11 @@ class UnifiedVHDLGenerator:
             }
             w.writeln(f"signal {inst}_en   : std_logic;")
             w.writeln(f"signal {inst}_we   : std_logic;")
-            w.writeln(f"signal {inst}_addr : signed(31 downto 0);")
-            w.writeln(f"signal {inst}_din  : signed(31 downto 0);")
-            w.writeln(f"signal {inst}_dout : signed(31 downto 0);")
+            # NOTE: addr/din/dout are std_logic_vector at top-level.
+            # Any numeric interpretation is done inside RamSimple.
+            w.writeln(f"signal {inst}_addr : std_logic_vector(31 downto 0);")
+            w.writeln(f"signal {inst}_din  : std_logic_vector(31 downto 0);")
+            w.writeln(f"signal {inst}_dout : std_logic_vector(31 downto 0);")
         w.writeln("")
 
         # 2d) one signal per datapath edge
@@ -1457,7 +1464,7 @@ class UnifiedVHDLGenerator:
             for (dst, lab) in dp.succ(src.id):
                 sname = f"sig_{src.id}_{dst}"
                 edge_sig[(src.id, dst, lab)] = sname
-                w.writeln(f"signal {sname} : signed(31 downto 0);")
+                w.writeln(f"signal {sname} : std_logic_vector(31 downto 0);")
         w.writeln("")
 
         # FSM state signal
@@ -1471,21 +1478,21 @@ class UnifiedVHDLGenerator:
         w.writeln("-- Component declarations (assumed to exist)")
         w.writeln("component Reg32 is")
         w.indent()
-        w.writeln("port(clk: in std_logic; en: in std_logic; d: in signed(31 downto 0); q: out signed(31 downto 0));")
+        w.writeln("port(clk: in std_logic; en: in std_logic; d: in std_logic_vector(31 downto 0); q: out std_logic_vector(31 downto 0));")
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
 
         w.writeln("component Adder32 is")
         w.indent()
-        w.writeln("port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));")
+        w.writeln("port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));")
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
 
         w.writeln("component Mul32 is")
         w.indent()
-        w.writeln("port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));")
+        w.writeln("port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));")
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
@@ -1514,16 +1521,16 @@ class UnifiedVHDLGenerator:
         w.writeln("clk  : in  std_logic;")
         w.writeln("en   : in  std_logic;")
         w.writeln("we   : in  std_logic;")
-        w.writeln("addr : in  signed(ADDR_WIDTH-1 downto 0);")
-        w.writeln("din  : in  signed(DATA_WIDTH-1 downto 0);")
-        w.writeln("dout : out signed(DATA_WIDTH-1 downto 0)")
+        # NOTE: RamSimple ports are std_logic_vector at top-level.
+        w.writeln("addr : in  std_logic_vector(ADDR_WIDTH-1 downto 0);")
+        w.writeln("din  : in  std_logic_vector(DATA_WIDTH-1 downto 0);")
+        w.writeln("dout : out std_logic_vector(DATA_WIDTH-1 downto 0)")
         w.dedent()
         w.writeln(");")
 
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
-
 
         # -------------------------
         # 4) Begin architecture body
@@ -1539,7 +1546,7 @@ class UnifiedVHDLGenerator:
                 d_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="d")
                 w.writeln(f"U_{r}: Reg32 port map(")
                 w.indent()
-                w.writeln(f"clk => clk,")
+                w.writeln("clk => clk,")
                 w.writeln(f"en  => {reg_en[r]},")
                 w.writeln(f"d   => {d_sig},")
                 w.writeln(f"q   => {reg_q[r]}")
@@ -1547,8 +1554,7 @@ class UnifiedVHDLGenerator:
                 w.writeln(");")
         w.writeln("")
 
-
-# per-RAM initialization values (only first 8 slots) ---
+        # per-RAM initialization values (only first 8 slots) ---
         mem_init8 = {}
         for inst in mem_ctrl.keys():
             res = mem_resources[inst]
@@ -1577,6 +1583,8 @@ class UnifiedVHDLGenerator:
             w.writeln("clk  => clk,")
             w.writeln(f"en   => {c['en']},")
             w.writeln(f"we   => {c['we']},")
+            # NOTE: RamSimple.addr is ADDR_WIDTH bits. We keep the exact same wiring
+            # semantics: take low bits of the 32-bit address bus.
             w.writeln(f"addr => {c['addr']}(9 downto 0),")
             w.writeln(f"din  => {c['din']},")
             w.writeln(f"dout => {c['dout']}")
@@ -1584,9 +1592,7 @@ class UnifiedVHDLGenerator:
             w.writeln(");")
 
             w.dedent()
-            w.writeln("")  #  separator between instances
-
-
+            w.writeln("")  # separator between instances
 
         # 4c) Instantiate adders/muls (DPResource nodes)
         for n in dp.nodes():
@@ -1595,6 +1601,7 @@ class UnifiedVHDLGenerator:
                 if res.kind == "add":
                     a_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in0")
                     b_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in1")
+
                     # NEW: allow resource reuse over time => multiple 'd' successors
                     y_sigs = []
                     for (dst, lab) in dp.succ(n.id):
@@ -1612,6 +1619,7 @@ class UnifiedVHDLGenerator:
                 if res.kind == "mul":
                     a_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in0")
                     b_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in1")
+
                     # NEW: allow resource reuse over time => multiple 'd' successors
                     y_sigs = []
                     for (dst, lab) in dp.succ(n.id):
@@ -1642,14 +1650,22 @@ class UnifiedVHDLGenerator:
         # Build Register object -> dp node id map from dp_info
         regobj_to_dpid = dp_info["reg_node"]  # {Register: dp_id}
 
+        # Helper: emit 32-bit std_logic_vector literal (two's complement for negatives)
+        def _slv32_literal(v: int) -> str:
+            u = v & 0xFFFFFFFF
+            return f'x"{u:08X}"'
+
         # For each DFG edge that comes from a constant producer,
         # drive the datapath wire (cst_dp -> reg_dp, label="d") with that constant value.
+        #
+        # IMPORTANT: Top-level uses ONLY std_logic_1164, so we cannot use to_signed().
+        # We therefore emit a 32-bit hex literal that preserves the exact bit pattern.
         for (src_dfg, dst_dfg, lab), reg in edge_regs.items():
             src_node = dfg.node(src_dfg)
             if isinstance(src_node, DFGCst):
                 reg_dp = regobj_to_dpid[reg]
                 sig_name = edge_sig[(cst_dp, reg_dp, "d")]
-                w.writeln(f"{sig_name} <= to_signed({src_node.value}, 32);")
+                w.writeln(f"{sig_name} <= {_slv32_literal(int(src_node.value))};")
         w.writeln("")
 
         # RAM dout fanout: any datapath edge (mem_dp -> reg_dp, "d") must be driven by mem_X_dout
@@ -1665,7 +1681,6 @@ class UnifiedVHDLGenerator:
                         sig_name = edge_sig[(mem_dp, dst_id, "d")]
                         w.writeln(f"{sig_name} <= {dout_sig};")
         w.writeln("")
-
 
         # -------------------------
         # 4d) MUX combinational logic (NOW INCLUDED)
@@ -1720,7 +1735,7 @@ class UnifiedVHDLGenerator:
                 out_sig = edge_sig[(n.id, dst_id, out_lab)]
 
                 w.writeln(f"-- {n.name} mux driving {out_sig}")
-                w.writeln(f"process(all)")
+                w.writeln("process(all)")
                 w.writeln("begin")
                 w.indent()
                 w.writeln(f"case {sel_sig} is")
@@ -1737,7 +1752,6 @@ class UnifiedVHDLGenerator:
                 w.dedent()
                 w.writeln("end process;")
                 w.writeln("")
-
 
         # Connect datapath graph outputs into RAM ports:
         # mem_addr <= edge_sig[(mux_addr_dp -> mem_dp, "addr")]
@@ -1761,7 +1775,6 @@ class UnifiedVHDLGenerator:
         # -------------------------
         ctrl_gen = ControlGenerator()
         control_by_t = ctrl_gen.build_controls(dfg, schedule, binding, edge_regs, dp_info)
-
 
         # -------------------------
         # 5A) STATE REGISTER (clocked)
@@ -1804,8 +1817,6 @@ class UnifiedVHDLGenerator:
         w.dedent()
         w.writeln("end process;")
         w.writeln("")
-
-
 
         # -------------------------
         # 5B) CONTROL DECODE (combinational)
@@ -1868,14 +1879,12 @@ class UnifiedVHDLGenerator:
         w.writeln("end process;")
         w.writeln("")
 
-
-
         # end architecture
         w.dedent()
         w.writeln("end architecture;")
 
         return w.text()
-    
+
     # -------------------------
     # internal helpers
     # -------------------------
@@ -1896,5 +1905,4 @@ class UnifiedVHDLGenerator:
         if len(succs) != 1:
             raise RuntimeError(f"Expected exactly 1 succ with label={needed_label} out of node {src_id}, got {succs}")
         return edge_sig[succs[0]]
-
 

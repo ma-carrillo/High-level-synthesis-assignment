@@ -1673,20 +1673,17 @@ class UnifiedVHDLGenerator:
                 if isinstance(tok, str) and tok.startswith("w_"):
                     wire_tokens.add(tok)
 
-
         cst_tokens = set()
         for (_k, toks) in mux_inputs.items():
             for tok in toks:
                 if isinstance(tok, str) and tok.startswith("cst_"):
                     cst_tokens.add(tok)
 
-
         # -------------------------
         # 1) Header + entity
         # -------------------------
         w.writeln("library ieee;")
         w.writeln("use ieee.std_logic_1164.all;")
-        w.writeln("use ieee.numeric_std.all;")
         w.writeln("")
         w.writeln(f"entity {self.top_name} is")
         w.indent()
@@ -1722,7 +1719,7 @@ class UnifiedVHDLGenerator:
                 en = f"{rname}_en"
                 reg_q[rname] = qn
                 reg_en[rname] = en
-                w.writeln(f"signal {qn}  : signed(31 downto 0);")
+                w.writeln(f"signal {qn}  : std_logic_vector(31 downto 0);")
                 w.writeln(f"signal {en}  : std_logic;")
         w.writeln("")
 
@@ -1750,9 +1747,9 @@ class UnifiedVHDLGenerator:
             }
             w.writeln(f"signal {inst}_en   : std_logic;")
             w.writeln(f"signal {inst}_we   : std_logic;")
-            w.writeln(f"signal {inst}_addr : signed(31 downto 0);")
-            w.writeln(f"signal {inst}_din  : signed(31 downto 0);")
-            w.writeln(f"signal {inst}_dout : signed(31 downto 0);")
+            w.writeln(f"signal {inst}_addr : std_logic_vector(31 downto 0);")
+            w.writeln(f"signal {inst}_din  : std_logic_vector(31 downto 0);")
+            w.writeln(f"signal {inst}_dout : std_logic_vector(31 downto 0);")
         w.writeln("")
 
         def _san(lab):
@@ -1766,9 +1763,8 @@ class UnifiedVHDLGenerator:
             for (dst, lab, _kind) in dp.succ(src.id):
                 sname = f"sig_{src.id}_{dst}_{_san(lab)}"
                 edge_sig[(src.id, dst, lab)] = sname
-                w.writeln(f"signal {sname} : signed(31 downto 0);")
+                w.writeln(f"signal {sname} : std_logic_vector(31 downto 0);")
         w.writeln("")
-
 
         var_resources = {}
         for dfg_nid, res in binding.items():
@@ -1779,10 +1775,9 @@ class UnifiedVHDLGenerator:
         for inst in sorted(var_resources.keys()):
             var_ctrl[inst] = {"en": f"{inst}_en", "d": f"{inst}_d", "q": f"{inst}_q"}
             w.writeln(f"signal {inst}_en : std_logic;")
-            w.writeln(f"signal {inst}_d  : signed(31 downto 0);")
-            w.writeln(f"signal {inst}_q  : signed(31 downto 0);")
+            w.writeln(f"signal {inst}_d  : std_logic_vector(31 downto 0);")
+            w.writeln(f"signal {inst}_q  : std_logic_vector(31 downto 0);")
         w.writeln("")
-
 
         # 2e) Shared FU output signals (one per adder/mul instance)
         fu_y = {}  # key: ("add"|"mul", instance) -> signal name
@@ -1793,16 +1788,11 @@ class UnifiedVHDLGenerator:
                 if res.kind in ("add", "mul"):
                     yname = f"{res.instance}_y"
                     fu_y[(res.kind, res.instance)] = yname
-                    w.writeln(f"signal {yname} : signed(31 downto 0);")
+                    w.writeln(f"signal {yname} : std_logic_vector(31 downto 0);")
         w.writeln("")
 
         for tok in sorted(cst_tokens):
-            w.writeln(f"signal {tok} : signed(31 downto 0);")
-
-
-
-
-
+            w.writeln(f"signal {tok} : std_logic_vector(31 downto 0);")
 
         # FSM state signal
         max_t = max(schedule.values()) if schedule else 0
@@ -1815,21 +1805,21 @@ class UnifiedVHDLGenerator:
         w.writeln("-- Component declarations (assumed to exist)")
         w.writeln("component Reg32 is")
         w.indent()
-        w.writeln("port(clk: in std_logic; en: in std_logic; d: in signed(31 downto 0); q: out signed(31 downto 0));")
+        w.writeln("port(clk: in std_logic; en: in std_logic; d: in std_logic_vector(31 downto 0); q: out std_logic_vector(31 downto 0));")
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
 
         w.writeln("component Adder32 is")
         w.indent()
-        w.writeln("port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));")
+        w.writeln("port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));")
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
 
         w.writeln("component Mul32 is")
         w.indent()
-        w.writeln("port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));")
+        w.writeln("port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));")
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
@@ -1858,16 +1848,15 @@ class UnifiedVHDLGenerator:
         w.writeln("clk  : in  std_logic;")
         w.writeln("en   : in  std_logic;")
         w.writeln("we   : in  std_logic;")
-        w.writeln("addr : in  signed(ADDR_WIDTH-1 downto 0);")
-        w.writeln("din  : in  signed(DATA_WIDTH-1 downto 0);")
-        w.writeln("dout : out signed(DATA_WIDTH-1 downto 0)")
+        w.writeln("addr : in  std_logic_vector(ADDR_WIDTH-1 downto 0);")
+        w.writeln("din  : in  std_logic_vector(DATA_WIDTH-1 downto 0);")
+        w.writeln("dout : out std_logic_vector(DATA_WIDTH-1 downto 0)")
         w.dedent()
         w.writeln(");")
 
         w.dedent()
         w.writeln("end component;")
         w.writeln("")
-
 
         # -------------------------
         # 4) Begin architecture body
@@ -1876,7 +1865,6 @@ class UnifiedVHDLGenerator:
         w.writeln("begin")
         w.indent()
 
-        
         for inst in sorted(var_ctrl.keys()):
             c = var_ctrl[inst]
             w.writeln(f"U_{inst}: Reg32 port map(")
@@ -1888,7 +1876,6 @@ class UnifiedVHDLGenerator:
             w.dedent()
             w.writeln(");")
         w.writeln("")
-
 
         for n in dp.nodes():
             if isinstance(n, DPResource) and n.resource.kind == "var":
@@ -1902,7 +1889,6 @@ class UnifiedVHDLGenerator:
 
         w.writeln("")
 
-
         # 4a) Instantiate registers
         for n in dp.nodes():
             if isinstance(n, DPRegister):
@@ -1910,19 +1896,13 @@ class UnifiedVHDLGenerator:
                 d_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="d")
                 w.writeln(f"U_{r}: Reg32 port map(")
                 w.indent()
-                w.writeln(f"clk => clk,")
+                w.writeln("clk => clk,")
                 w.writeln(f"en  => {reg_en[r]},")
                 w.writeln(f"d   => {d_sig},")
                 w.writeln(f"q   => {reg_q[r]}")
                 w.dedent()
                 w.writeln(");")
         w.writeln("")
-
-        
-
-
-
-
 
         # per-RAM initialization values (only first 8 slots) ---
         mem_init8 = {}
@@ -1962,8 +1942,6 @@ class UnifiedVHDLGenerator:
             w.dedent()
             w.writeln("")  #  separator between instances
 
-
-
         # 4c) Instantiate adders/muls (DPResource nodes)
         for n in dp.nodes():
             if isinstance(n, DPResource):
@@ -1975,14 +1953,11 @@ class UnifiedVHDLGenerator:
                     y_sig = fu_y[(res.kind, res.instance)]
                     w.writeln(f"U_{res.instance}: Adder32 port map(a => {a_sig}, b => {b_sig}, y => {y_sig});")
 
-
                     # Connect shared FU output to all outgoing "d" edges (FU -> registers)
                     for (dst, lab, _kind) in dp.succ(n.id):
                         if lab == "d":
                             y_edge_sig = edge_sig[(n.id, dst, lab)]
                             w.writeln(f"{y_edge_sig} <= {y_sig};")
-
-
 
                 if res.kind == "mul":
                     a_sig = self._find_single_pred_signal(dp, edge_sig, n.id, needed_label="in0")
@@ -1999,13 +1974,9 @@ class UnifiedVHDLGenerator:
                             y_edge_sig = edge_sig[(n.id, dst, lab)]
                             w.writeln(f"{y_edge_sig} <= {y_sig};")
 
-
-
-
         w.writeln("")
 
         dp_node_by_id = {n.id: n for n in dp.nodes()}
-
 
         for n in dp.nodes():
             if isinstance(n, DPResource) and n.resource.kind == "var":
@@ -2015,7 +1986,6 @@ class UnifiedVHDLGenerator:
                     if lab == "val" and isinstance(dp_node_by_id[src_id], DPMux):
                         sig_name = edge_sig[(src_id, res_dp, "val")]
                         w.writeln(f"{var_ctrl[inst]['d']} <= {sig_name};")
-
 
         # -------------------------
         # 4c.5) Datapath wiring: constants + RAM dout fanout
@@ -2028,6 +1998,14 @@ class UnifiedVHDLGenerator:
         # Build Register object -> dp node id map from dp_info
         regobj_to_dpid = dp_info["reg_node"]  # {Register: dp_id}
 
+        def _int_to_slv32(v: int) -> str:
+            """
+            Emit a 32-bit std_logic_vector literal without numeric_std.
+            Uses two's complement for negatives (wrap mod 2^32).
+            """
+            vv = v & 0xFFFFFFFF
+            return f'x"{vv:08X}"'
+
         # For each DFG edge that comes from a constant producer,
         # drive the datapath wire (cst_dp -> reg_dp, label="d") with that constant value.
         for (src_dfg, dst_dfg, lab), reg in edge_regs.items():
@@ -2035,7 +2013,7 @@ class UnifiedVHDLGenerator:
             if isinstance(src_node, DFGCst):
                 reg_dp = regobj_to_dpid[reg]
                 sig_name = edge_sig[(cst_dp, reg_dp, "d")]
-                w.writeln(f"{sig_name} <= to_signed({src_node.value}, 32);")
+                w.writeln(f"{sig_name} <= {_int_to_slv32(src_node.value)};")
         w.writeln("")
 
         # RAM dout fanout: any datapath edge (mem_dp -> reg_dp, "d") must be driven by mem_X_dout
@@ -2051,7 +2029,6 @@ class UnifiedVHDLGenerator:
                         sig_name = edge_sig[(mem_dp, dst_id, "d")]
                         w.writeln(f"{sig_name} <= {dout_sig};")
         w.writeln("")
-
 
         # -------------------------
         # 4d) MUX combinational logic (NOW INCLUDED)
@@ -2079,7 +2056,7 @@ class UnifiedVHDLGenerator:
                 v = int(tok.split("_", 1)[1])
             except Exception:
                 raise RuntimeError(f"Bad constant token '{tok}'. Expected format 'cst_<int>'")
-            w.writeln(f"{tok} <= to_signed({v}, 32);")
+            w.writeln(f"{tok} <= {_int_to_slv32(v)};")
         if cst_tokens:
             w.writeln("")
 
@@ -2111,7 +2088,7 @@ class UnifiedVHDLGenerator:
 
             ordered_regs = mux_inputs[key_match]
 
-                        # Map each ordered token -> VHDL signal expression
+            # Map each ordered token -> VHDL signal expression
             token_to_expr = {}
 
             # 1) Registered inputs: DPRegister preds give rX_q signals
@@ -2147,7 +2124,7 @@ class UnifiedVHDLGenerator:
 
                 # If bypassing from a constant, use literal directly (no dp edge needed)
                 if isinstance(src_dfg_node, DFGCst):
-                    token_to_expr[tok] = f"to_signed({src_dfg_node.value}, 32)"
+                    token_to_expr[tok] = _int_to_slv32(src_dfg_node.value)
                     continue
 
                 # If bypassing from a reg-load, use the variable register Q directly
@@ -2172,8 +2149,6 @@ class UnifiedVHDLGenerator:
 
                 token_to_expr[tok] = found
 
-
-
             # For each mux output edge, drive its wire with the selected input
             for (dst_id, out_lab, _kind) in mux_out_edges:
                 out_sig = edge_sig[(n.id, dst_id, out_lab)]
@@ -2193,7 +2168,7 @@ class UnifiedVHDLGenerator:
                         )
                     w.writeln(f"when {i} => {out_sig} <= {token_to_expr[tok]};")
 
-                w.writeln(f"when others => {out_sig} <= (others => '0');")
+                w.writeln("when others => {0} <= (others => '0');".format(out_sig))
                 w.dedent()
                 w.writeln("end case;")
                 w.dedent()
@@ -2220,10 +2195,8 @@ class UnifiedVHDLGenerator:
         # -------------------------
         # 5) Build control table (Python-side)
         # -------------------------
-
         ctrl_gen = ControlGenerator()
         control_by_t = ctrl_gen.build_controls(dfg, schedule, binding, edge_regs, dp_info)
-
 
         # -------------------------
         # 5A) STATE REGISTER (clocked)
@@ -2267,8 +2240,6 @@ class UnifiedVHDLGenerator:
         w.writeln("end process;")
         w.writeln("")
 
-
-
         # -------------------------
         # 5B) CONTROL DECODE (combinational)
         # -------------------------
@@ -2291,7 +2262,6 @@ class UnifiedVHDLGenerator:
 
         for inst in sorted(var_ctrl.keys()):
             w.writeln(f"{var_ctrl[inst]['en']} <= '0';")
-
 
         w.writeln("done <= '0';")
         w.writeln("")
@@ -2320,8 +2290,7 @@ class UnifiedVHDLGenerator:
                         w.writeln(f"{inst}_we <= '1';")
 
                 for inst in sorted(ctrl.get("var_we", [])):
-                        w.writeln(f"{inst}_en <= '1';")
-
+                    w.writeln(f"{inst}_en <= '1';")
 
             w.dedent()
 
@@ -2338,20 +2307,18 @@ class UnifiedVHDLGenerator:
         w.writeln("end process;")
         w.writeln("")
 
-
-
         # end architecture
         w.dedent()
         w.writeln("end architecture;")
 
         return w.text()
-    
+
     # -------------------------
     # internal helpers
     # -------------------------
     def _find_single_pred_signal(self, dp, edge_sig, dst_id, needed_label):
         preds = []
-        for (src, lab, _kind)  in dp.pred(dst_id):
+        for (src, lab, _kind) in dp.pred(dst_id):
             if lab == needed_label:
                 preds.append((src, dst_id, lab))
         if len(preds) != 1:
@@ -2366,5 +2333,3 @@ class UnifiedVHDLGenerator:
         if len(succs) != 1:
             raise RuntimeError(f"Expected exactly 1 succ with label={needed_label} out of node {src_id}, got {succs}")
         return edge_sig[succs[0]]
-
-

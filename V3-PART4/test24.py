@@ -194,10 +194,5 @@ if __name__ == "__main__":
     print("  - FSM control (reg enables, mux selects, mem ctrl)")
 
 
-    print("Scheduler class:", Scheduler, "from", Scheduler.__module__)
-    n = dfg.node(3)
-    print("Node3 type:", type(n), "module:", type(n).__module__)
-
-
 
 

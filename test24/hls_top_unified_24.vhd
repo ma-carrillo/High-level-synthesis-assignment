@@ -1,6 +1,5 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
 entity hls_top_unified_24 is
   port (
@@ -11,69 +10,69 @@ entity hls_top_unified_24 is
 end entity;
 
 architecture rtl of hls_top_unified_24 is
-  signal r0_q  : signed(31 downto 0);
+  signal r0_q  : std_logic_vector(31 downto 0);
   signal r0_en  : std_logic;
-  signal r1_q  : signed(31 downto 0);
+  signal r1_q  : std_logic_vector(31 downto 0);
   signal r1_en  : std_logic;
-  signal r2_q  : signed(31 downto 0);
+  signal r2_q  : std_logic_vector(31 downto 0);
   signal r2_en  : std_logic;
-  signal r3_q  : signed(31 downto 0);
+  signal r3_q  : std_logic_vector(31 downto 0);
   signal r3_en  : std_logic;
-  signal r4_q  : signed(31 downto 0);
+  signal r4_q  : std_logic_vector(31 downto 0);
   signal r4_en  : std_logic;
-  signal r5_q  : signed(31 downto 0);
+  signal r5_q  : std_logic_vector(31 downto 0);
   signal r5_en  : std_logic;
-  signal r6_q  : signed(31 downto 0);
+  signal r6_q  : std_logic_vector(31 downto 0);
   signal r6_en  : std_logic;
-  signal r7_q  : signed(31 downto 0);
+  signal r7_q  : std_logic_vector(31 downto 0);
   signal r7_en  : std_logic;
-  signal r8_q  : signed(31 downto 0);
+  signal r8_q  : std_logic_vector(31 downto 0);
   signal r8_en  : std_logic;
-  signal r9_q  : signed(31 downto 0);
+  signal r9_q  : std_logic_vector(31 downto 0);
   signal r9_en  : std_logic;
-  signal r10_q  : signed(31 downto 0);
+  signal r10_q  : std_logic_vector(31 downto 0);
   signal r10_en  : std_logic;
-  signal r11_q  : signed(31 downto 0);
+  signal r11_q  : std_logic_vector(31 downto 0);
   signal r11_en  : std_logic;
-  signal r12_q  : signed(31 downto 0);
+  signal r12_q  : std_logic_vector(31 downto 0);
   signal r12_en  : std_logic;
-  signal r13_q  : signed(31 downto 0);
+  signal r13_q  : std_logic_vector(31 downto 0);
   signal r13_en  : std_logic;
-  signal r14_q  : signed(31 downto 0);
+  signal r14_q  : std_logic_vector(31 downto 0);
   signal r14_en  : std_logic;
-  signal r15_q  : signed(31 downto 0);
+  signal r15_q  : std_logic_vector(31 downto 0);
   signal r15_en  : std_logic;
-  signal r16_q  : signed(31 downto 0);
+  signal r16_q  : std_logic_vector(31 downto 0);
   signal r16_en  : std_logic;
-  signal r17_q  : signed(31 downto 0);
+  signal r17_q  : std_logic_vector(31 downto 0);
   signal r17_en  : std_logic;
-  signal r18_q  : signed(31 downto 0);
+  signal r18_q  : std_logic_vector(31 downto 0);
   signal r18_en  : std_logic;
-  signal r19_q  : signed(31 downto 0);
+  signal r19_q  : std_logic_vector(31 downto 0);
   signal r19_en  : std_logic;
-  signal r20_q  : signed(31 downto 0);
+  signal r20_q  : std_logic_vector(31 downto 0);
   signal r20_en  : std_logic;
-  signal r21_q  : signed(31 downto 0);
+  signal r21_q  : std_logic_vector(31 downto 0);
   signal r21_en  : std_logic;
-  signal r22_q  : signed(31 downto 0);
+  signal r22_q  : std_logic_vector(31 downto 0);
   signal r22_en  : std_logic;
-  signal r23_q  : signed(31 downto 0);
+  signal r23_q  : std_logic_vector(31 downto 0);
   signal r23_en  : std_logic;
-  signal r24_q  : signed(31 downto 0);
+  signal r24_q  : std_logic_vector(31 downto 0);
   signal r24_en  : std_logic;
-  signal r25_q  : signed(31 downto 0);
+  signal r25_q  : std_logic_vector(31 downto 0);
   signal r25_en  : std_logic;
-  signal r26_q  : signed(31 downto 0);
+  signal r26_q  : std_logic_vector(31 downto 0);
   signal r26_en  : std_logic;
-  signal r27_q  : signed(31 downto 0);
+  signal r27_q  : std_logic_vector(31 downto 0);
   signal r27_en  : std_logic;
-  signal r28_q  : signed(31 downto 0);
+  signal r28_q  : std_logic_vector(31 downto 0);
   signal r28_en  : std_logic;
-  signal r29_q  : signed(31 downto 0);
+  signal r29_q  : std_logic_vector(31 downto 0);
   signal r29_en  : std_logic;
-  signal r30_q  : signed(31 downto 0);
+  signal r30_q  : std_logic_vector(31 downto 0);
   signal r30_en  : std_logic;
-  signal r31_q  : signed(31 downto 0);
+  signal r31_q  : std_logic_vector(31 downto 0);
   signal r31_en  : std_logic;
   
   signal sel_mem_0_addr : integer := 0;
@@ -87,115 +86,115 @@ architecture rtl of hls_top_unified_24 is
   
   signal mem_0_en   : std_logic;
   signal mem_0_we   : std_logic;
-  signal mem_0_addr : signed(31 downto 0);
-  signal mem_0_din  : signed(31 downto 0);
-  signal mem_0_dout : signed(31 downto 0);
+  signal mem_0_addr : std_logic_vector(31 downto 0);
+  signal mem_0_din  : std_logic_vector(31 downto 0);
+  signal mem_0_dout : std_logic_vector(31 downto 0);
   signal mem_1_en   : std_logic;
   signal mem_1_we   : std_logic;
-  signal mem_1_addr : signed(31 downto 0);
-  signal mem_1_din  : signed(31 downto 0);
-  signal mem_1_dout : signed(31 downto 0);
+  signal mem_1_addr : std_logic_vector(31 downto 0);
+  signal mem_1_din  : std_logic_vector(31 downto 0);
+  signal mem_1_dout : std_logic_vector(31 downto 0);
   signal mem_2_en   : std_logic;
   signal mem_2_we   : std_logic;
-  signal mem_2_addr : signed(31 downto 0);
-  signal mem_2_din  : signed(31 downto 0);
-  signal mem_2_dout : signed(31 downto 0);
+  signal mem_2_addr : std_logic_vector(31 downto 0);
+  signal mem_2_din  : std_logic_vector(31 downto 0);
+  signal mem_2_dout : std_logic_vector(31 downto 0);
   
-  signal sig_0_38_in : signed(31 downto 0);
-  signal sig_0_39_in : signed(31 downto 0);
-  signal sig_0_40_in : signed(31 downto 0);
-  signal sig_1_6_d : signed(31 downto 0);
-  signal sig_1_9_d : signed(31 downto 0);
-  signal sig_1_12_d : signed(31 downto 0);
-  signal sig_1_14_d : signed(31 downto 0);
-  signal sig_1_17_d : signed(31 downto 0);
-  signal sig_1_20_d : signed(31 downto 0);
-  signal sig_1_22_d : signed(31 downto 0);
-  signal sig_1_25_d : signed(31 downto 0);
-  signal sig_1_28_d : signed(31 downto 0);
-  signal sig_1_30_d : signed(31 downto 0);
-  signal sig_1_33_d : signed(31 downto 0);
-  signal sig_1_36_d : signed(31 downto 0);
-  signal sig_2_7_d : signed(31 downto 0);
-  signal sig_2_10_d : signed(31 downto 0);
-  signal sig_2_13_d : signed(31 downto 0);
-  signal sig_2_15_d : signed(31 downto 0);
-  signal sig_2_18_d : signed(31 downto 0);
-  signal sig_2_21_d : signed(31 downto 0);
-  signal sig_2_23_d : signed(31 downto 0);
-  signal sig_2_26_d : signed(31 downto 0);
-  signal sig_2_29_d : signed(31 downto 0);
-  signal sig_2_31_d : signed(31 downto 0);
-  signal sig_2_34_d : signed(31 downto 0);
-  signal sig_2_37_d : signed(31 downto 0);
-  signal sig_3_8_d : signed(31 downto 0);
-  signal sig_3_44_in : signed(31 downto 0);
-  signal sig_3_16_d : signed(31 downto 0);
-  signal sig_3_24_d : signed(31 downto 0);
-  signal sig_3_32_d : signed(31 downto 0);
-  signal sig_4_11_d : signed(31 downto 0);
-  signal sig_4_45_in : signed(31 downto 0);
-  signal sig_4_19_d : signed(31 downto 0);
-  signal sig_4_27_d : signed(31 downto 0);
-  signal sig_4_35_d : signed(31 downto 0);
-  signal sig_6_41_in : signed(31 downto 0);
-  signal sig_7_42_in : signed(31 downto 0);
-  signal sig_8_43_in : signed(31 downto 0);
-  signal sig_9_41_in : signed(31 downto 0);
-  signal sig_10_42_in : signed(31 downto 0);
-  signal sig_11_43_in : signed(31 downto 0);
-  signal sig_12_41_in : signed(31 downto 0);
-  signal sig_13_42_in : signed(31 downto 0);
-  signal sig_14_41_in : signed(31 downto 0);
-  signal sig_15_42_in : signed(31 downto 0);
-  signal sig_16_43_in : signed(31 downto 0);
-  signal sig_17_41_in : signed(31 downto 0);
-  signal sig_18_42_in : signed(31 downto 0);
-  signal sig_19_43_in : signed(31 downto 0);
-  signal sig_20_41_in : signed(31 downto 0);
-  signal sig_21_42_in : signed(31 downto 0);
-  signal sig_22_41_in : signed(31 downto 0);
-  signal sig_23_42_in : signed(31 downto 0);
-  signal sig_24_43_in : signed(31 downto 0);
-  signal sig_25_41_in : signed(31 downto 0);
-  signal sig_26_42_in : signed(31 downto 0);
-  signal sig_27_43_in : signed(31 downto 0);
-  signal sig_28_41_in : signed(31 downto 0);
-  signal sig_29_42_in : signed(31 downto 0);
-  signal sig_30_41_in : signed(31 downto 0);
-  signal sig_31_42_in : signed(31 downto 0);
-  signal sig_32_43_in : signed(31 downto 0);
-  signal sig_33_41_in : signed(31 downto 0);
-  signal sig_34_42_in : signed(31 downto 0);
-  signal sig_35_43_in : signed(31 downto 0);
-  signal sig_36_41_in : signed(31 downto 0);
-  signal sig_37_42_in : signed(31 downto 0);
-  signal sig_38_1_addr : signed(31 downto 0);
-  signal sig_39_2_addr : signed(31 downto 0);
-  signal sig_40_5_addr : signed(31 downto 0);
-  signal sig_41_3_in0 : signed(31 downto 0);
-  signal sig_42_3_in1 : signed(31 downto 0);
-  signal sig_43_4_in0 : signed(31 downto 0);
-  signal sig_44_4_in1 : signed(31 downto 0);
-  signal sig_45_5_val : signed(31 downto 0);
+  signal sig_0_38_in : std_logic_vector(31 downto 0);
+  signal sig_0_39_in : std_logic_vector(31 downto 0);
+  signal sig_0_40_in : std_logic_vector(31 downto 0);
+  signal sig_1_6_d : std_logic_vector(31 downto 0);
+  signal sig_1_9_d : std_logic_vector(31 downto 0);
+  signal sig_1_12_d : std_logic_vector(31 downto 0);
+  signal sig_1_14_d : std_logic_vector(31 downto 0);
+  signal sig_1_17_d : std_logic_vector(31 downto 0);
+  signal sig_1_20_d : std_logic_vector(31 downto 0);
+  signal sig_1_22_d : std_logic_vector(31 downto 0);
+  signal sig_1_25_d : std_logic_vector(31 downto 0);
+  signal sig_1_28_d : std_logic_vector(31 downto 0);
+  signal sig_1_30_d : std_logic_vector(31 downto 0);
+  signal sig_1_33_d : std_logic_vector(31 downto 0);
+  signal sig_1_36_d : std_logic_vector(31 downto 0);
+  signal sig_2_7_d : std_logic_vector(31 downto 0);
+  signal sig_2_10_d : std_logic_vector(31 downto 0);
+  signal sig_2_13_d : std_logic_vector(31 downto 0);
+  signal sig_2_15_d : std_logic_vector(31 downto 0);
+  signal sig_2_18_d : std_logic_vector(31 downto 0);
+  signal sig_2_21_d : std_logic_vector(31 downto 0);
+  signal sig_2_23_d : std_logic_vector(31 downto 0);
+  signal sig_2_26_d : std_logic_vector(31 downto 0);
+  signal sig_2_29_d : std_logic_vector(31 downto 0);
+  signal sig_2_31_d : std_logic_vector(31 downto 0);
+  signal sig_2_34_d : std_logic_vector(31 downto 0);
+  signal sig_2_37_d : std_logic_vector(31 downto 0);
+  signal sig_3_8_d : std_logic_vector(31 downto 0);
+  signal sig_3_44_in : std_logic_vector(31 downto 0);
+  signal sig_3_16_d : std_logic_vector(31 downto 0);
+  signal sig_3_24_d : std_logic_vector(31 downto 0);
+  signal sig_3_32_d : std_logic_vector(31 downto 0);
+  signal sig_4_11_d : std_logic_vector(31 downto 0);
+  signal sig_4_45_in : std_logic_vector(31 downto 0);
+  signal sig_4_19_d : std_logic_vector(31 downto 0);
+  signal sig_4_27_d : std_logic_vector(31 downto 0);
+  signal sig_4_35_d : std_logic_vector(31 downto 0);
+  signal sig_6_41_in : std_logic_vector(31 downto 0);
+  signal sig_7_42_in : std_logic_vector(31 downto 0);
+  signal sig_8_43_in : std_logic_vector(31 downto 0);
+  signal sig_9_41_in : std_logic_vector(31 downto 0);
+  signal sig_10_42_in : std_logic_vector(31 downto 0);
+  signal sig_11_43_in : std_logic_vector(31 downto 0);
+  signal sig_12_41_in : std_logic_vector(31 downto 0);
+  signal sig_13_42_in : std_logic_vector(31 downto 0);
+  signal sig_14_41_in : std_logic_vector(31 downto 0);
+  signal sig_15_42_in : std_logic_vector(31 downto 0);
+  signal sig_16_43_in : std_logic_vector(31 downto 0);
+  signal sig_17_41_in : std_logic_vector(31 downto 0);
+  signal sig_18_42_in : std_logic_vector(31 downto 0);
+  signal sig_19_43_in : std_logic_vector(31 downto 0);
+  signal sig_20_41_in : std_logic_vector(31 downto 0);
+  signal sig_21_42_in : std_logic_vector(31 downto 0);
+  signal sig_22_41_in : std_logic_vector(31 downto 0);
+  signal sig_23_42_in : std_logic_vector(31 downto 0);
+  signal sig_24_43_in : std_logic_vector(31 downto 0);
+  signal sig_25_41_in : std_logic_vector(31 downto 0);
+  signal sig_26_42_in : std_logic_vector(31 downto 0);
+  signal sig_27_43_in : std_logic_vector(31 downto 0);
+  signal sig_28_41_in : std_logic_vector(31 downto 0);
+  signal sig_29_42_in : std_logic_vector(31 downto 0);
+  signal sig_30_41_in : std_logic_vector(31 downto 0);
+  signal sig_31_42_in : std_logic_vector(31 downto 0);
+  signal sig_32_43_in : std_logic_vector(31 downto 0);
+  signal sig_33_41_in : std_logic_vector(31 downto 0);
+  signal sig_34_42_in : std_logic_vector(31 downto 0);
+  signal sig_35_43_in : std_logic_vector(31 downto 0);
+  signal sig_36_41_in : std_logic_vector(31 downto 0);
+  signal sig_37_42_in : std_logic_vector(31 downto 0);
+  signal sig_38_1_addr : std_logic_vector(31 downto 0);
+  signal sig_39_2_addr : std_logic_vector(31 downto 0);
+  signal sig_40_5_addr : std_logic_vector(31 downto 0);
+  signal sig_41_3_in0 : std_logic_vector(31 downto 0);
+  signal sig_42_3_in1 : std_logic_vector(31 downto 0);
+  signal sig_43_4_in0 : std_logic_vector(31 downto 0);
+  signal sig_44_4_in1 : std_logic_vector(31 downto 0);
+  signal sig_45_5_val : std_logic_vector(31 downto 0);
   
   
-  signal mul_0_y : signed(31 downto 0);
-  signal add_0_y : signed(31 downto 0);
+  signal mul_0_y : std_logic_vector(31 downto 0);
+  signal add_0_y : std_logic_vector(31 downto 0);
   
   signal state : integer range 0 to 13 := 0;
   
   -- Component declarations (assumed to exist)
   component Reg32 is
-    port(clk: in std_logic; en: in std_logic; d: in signed(31 downto 0); q: out signed(31 downto 0));
+    port(clk: in std_logic; en: in std_logic; d: in std_logic_vector(31 downto 0); q: out std_logic_vector(31 downto 0));
   end component;
   
   component Adder32 is
-    port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));
+    port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));
   end component;
   
   component Mul32 is
-    port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));
+    port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));
   end component;
   
   component RamSimple is
@@ -216,9 +215,9 @@ architecture rtl of hls_top_unified_24 is
       clk  : in  std_logic;
       en   : in  std_logic;
       we   : in  std_logic;
-      addr : in  signed(ADDR_WIDTH-1 downto 0);
-      din  : in  signed(DATA_WIDTH-1 downto 0);
-      dout : out signed(DATA_WIDTH-1 downto 0)
+      addr : in  std_logic_vector(ADDR_WIDTH-1 downto 0);
+      din  : in  std_logic_vector(DATA_WIDTH-1 downto 0);
+      dout : out std_logic_vector(DATA_WIDTH-1 downto 0)
     );
   end component;
   
@@ -527,12 +526,12 @@ begin
   process(all)
   begin
     case sel_mem_0_addr is
-      when 0 => sig_38_1_addr <= to_signed(0, 32);
-      when 1 => sig_38_1_addr <= to_signed(1, 32);
-      when 2 => sig_38_1_addr <= to_signed(2, 32);
-      when 3 => sig_38_1_addr <= to_signed(3, 32);
-      when 4 => sig_38_1_addr <= to_signed(4, 32);
-      when 5 => sig_38_1_addr <= to_signed(5, 32);
+      when 0 => sig_38_1_addr <= x"00000000";
+      when 1 => sig_38_1_addr <= x"00000001";
+      when 2 => sig_38_1_addr <= x"00000002";
+      when 3 => sig_38_1_addr <= x"00000003";
+      when 4 => sig_38_1_addr <= x"00000004";
+      when 5 => sig_38_1_addr <= x"00000005";
       when others => sig_38_1_addr <= (others => '0');
     end case;
   end process;
@@ -541,9 +540,9 @@ begin
   process(all)
   begin
     case sel_mem_1_addr is
-      when 0 => sig_39_2_addr <= to_signed(0, 32);
-      when 1 => sig_39_2_addr <= to_signed(1, 32);
-      when 2 => sig_39_2_addr <= to_signed(2, 32);
+      when 0 => sig_39_2_addr <= x"00000000";
+      when 1 => sig_39_2_addr <= x"00000001";
+      when 2 => sig_39_2_addr <= x"00000002";
       when others => sig_39_2_addr <= (others => '0');
     end case;
   end process;
@@ -552,10 +551,10 @@ begin
   process(all)
   begin
     case sel_mem_2_addr is
-      when 0 => sig_40_5_addr <= to_signed(0, 32);
-      when 1 => sig_40_5_addr <= to_signed(1, 32);
-      when 2 => sig_40_5_addr <= to_signed(2, 32);
-      when 3 => sig_40_5_addr <= to_signed(3, 32);
+      when 0 => sig_40_5_addr <= x"00000000";
+      when 1 => sig_40_5_addr <= x"00000001";
+      when 2 => sig_40_5_addr <= x"00000002";
+      when 3 => sig_40_5_addr <= x"00000003";
       when others => sig_40_5_addr <= (others => '0');
     end case;
   end process;
