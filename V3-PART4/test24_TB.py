@@ -6,7 +6,7 @@ from hls_core_part4_2 import (
     ASTToCDFG, Scheduler, ResourceBinder, RegisterAllocator,
     DatapathBuilder, UnifiedVHDLGenerator, DotPrinter,
     print_schedule, print_binding, print_edge_registers,
-    print_datapath, DatapathDotPrinter, Assign, Var, For, DFGOptimizer
+    print_datapath, DatapathDotPrinter, Assign, Var, For, DFGOptimizer, SimpleTestbenchGenerator
 )
 
 # =========================
@@ -47,6 +47,11 @@ if __name__ == "__main__":
     # C[1] = A1*W0 + A2*W1 + A3*W2
     # C[2] = A2*W0 + A3*W1 + A4*W2
     # C[3] = A3*W0 + A4*W1 + A5*W2
+
+
+    # Add(Load(A, Cst(0)), Load(W, Cst(0)))
+    # Mul(Load(A, Cst(0)), Load(W, Cst(0)))
+
     prog = Block([
         Store(C, Cst(0),
             Add(
@@ -184,8 +189,14 @@ if __name__ == "__main__":
     # 8) Generate FULL unified VHDL (datapath + muxes + FSM control)
     gen = UnifiedVHDLGenerator(top_name="hls_top_unified_24")
     vhdl = gen.generate_full(dfg, dp, schedule, binding, edge_regs, dp_info)
-
     write_text("hls_top_unified_24.vhd", vhdl)
+
+    tbgen = SimpleTestbenchGenerator(n_probe=8, timeout_cycles=20000)
+    tb_vhdl = tbgen.generate(dfg, dp, schedule, binding, edge_regs, dp_info,
+                         top_name="hls_top_unified_24",
+                         tb_name="tb_hls_24")
+    write_text("tb_hls_24.vhd", tb_vhdl)
+
 
     print(f"\nWrote: {out_path('hls_top_unified_24.vhd')}")
     print("This file includes:")

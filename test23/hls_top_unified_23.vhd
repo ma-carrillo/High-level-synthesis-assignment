@@ -1,6 +1,5 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
 entity hls_top_unified_23 is
   port (
@@ -11,21 +10,21 @@ entity hls_top_unified_23 is
 end entity;
 
 architecture rtl of hls_top_unified_23 is
-  signal r0_q  : signed(31 downto 0);
+  signal r0_q  : std_logic_vector(31 downto 0);
   signal r0_en  : std_logic;
-  signal r1_q  : signed(31 downto 0);
+  signal r1_q  : std_logic_vector(31 downto 0);
   signal r1_en  : std_logic;
-  signal r2_q  : signed(31 downto 0);
+  signal r2_q  : std_logic_vector(31 downto 0);
   signal r2_en  : std_logic;
-  signal r3_q  : signed(31 downto 0);
+  signal r3_q  : std_logic_vector(31 downto 0);
   signal r3_en  : std_logic;
-  signal r4_q  : signed(31 downto 0);
+  signal r4_q  : std_logic_vector(31 downto 0);
   signal r4_en  : std_logic;
-  signal r5_q  : signed(31 downto 0);
+  signal r5_q  : std_logic_vector(31 downto 0);
   signal r5_en  : std_logic;
-  signal r6_q  : signed(31 downto 0);
+  signal r6_q  : std_logic_vector(31 downto 0);
   signal r6_en  : std_logic;
-  signal r7_q  : signed(31 downto 0);
+  signal r7_q  : std_logic_vector(31 downto 0);
   signal r7_en  : std_logic;
   
   signal sel_var_s_val : integer := 0;
@@ -38,65 +37,65 @@ architecture rtl of hls_top_unified_23 is
   
   signal mem_0_en   : std_logic;
   signal mem_0_we   : std_logic;
-  signal mem_0_addr : signed(31 downto 0);
-  signal mem_0_din  : signed(31 downto 0);
-  signal mem_0_dout : signed(31 downto 0);
+  signal mem_0_addr : std_logic_vector(31 downto 0);
+  signal mem_0_din  : std_logic_vector(31 downto 0);
+  signal mem_0_dout : std_logic_vector(31 downto 0);
   signal mem_1_en   : std_logic;
   signal mem_1_we   : std_logic;
-  signal mem_1_addr : signed(31 downto 0);
-  signal mem_1_din  : signed(31 downto 0);
-  signal mem_1_dout : signed(31 downto 0);
+  signal mem_1_addr : std_logic_vector(31 downto 0);
+  signal mem_1_din  : std_logic_vector(31 downto 0);
+  signal mem_1_dout : std_logic_vector(31 downto 0);
   
-  signal sig_0_14_in : signed(31 downto 0);
-  signal sig_0_15_in : signed(31 downto 0);
-  signal sig_0_16_in : signed(31 downto 0);
-  signal sig_1_17_in : signed(31 downto 0);
-  signal sig_2_6_d : signed(31 downto 0);
-  signal sig_2_8_d : signed(31 downto 0);
-  signal sig_2_10_d : signed(31 downto 0);
-  signal sig_2_12_d : signed(31 downto 0);
-  signal sig_3_7_d : signed(31 downto 0);
-  signal sig_3_9_d : signed(31 downto 0);
-  signal sig_3_11_d : signed(31 downto 0);
-  signal sig_3_13_d : signed(31 downto 0);
-  signal sig_4_20_in : signed(31 downto 0);
-  signal sig_5_14_in : signed(31 downto 0);
-  signal sig_6_18_in : signed(31 downto 0);
-  signal sig_7_19_in : signed(31 downto 0);
-  signal sig_8_18_in : signed(31 downto 0);
-  signal sig_9_19_in : signed(31 downto 0);
-  signal sig_10_18_in : signed(31 downto 0);
-  signal sig_11_19_in : signed(31 downto 0);
-  signal sig_12_18_in : signed(31 downto 0);
-  signal sig_13_19_in : signed(31 downto 0);
-  signal sig_14_1_val : signed(31 downto 0);
-  signal sig_15_2_addr : signed(31 downto 0);
-  signal sig_16_3_addr : signed(31 downto 0);
-  signal sig_17_5_in0 : signed(31 downto 0);
-  signal sig_18_4_in0 : signed(31 downto 0);
-  signal sig_19_4_in1 : signed(31 downto 0);
-  signal sig_20_5_in1 : signed(31 downto 0);
+  signal sig_0_14_in : std_logic_vector(31 downto 0);
+  signal sig_0_15_in : std_logic_vector(31 downto 0);
+  signal sig_0_16_in : std_logic_vector(31 downto 0);
+  signal sig_1_17_in : std_logic_vector(31 downto 0);
+  signal sig_2_6_d : std_logic_vector(31 downto 0);
+  signal sig_2_8_d : std_logic_vector(31 downto 0);
+  signal sig_2_10_d : std_logic_vector(31 downto 0);
+  signal sig_2_12_d : std_logic_vector(31 downto 0);
+  signal sig_3_7_d : std_logic_vector(31 downto 0);
+  signal sig_3_9_d : std_logic_vector(31 downto 0);
+  signal sig_3_11_d : std_logic_vector(31 downto 0);
+  signal sig_3_13_d : std_logic_vector(31 downto 0);
+  signal sig_4_20_in : std_logic_vector(31 downto 0);
+  signal sig_5_14_in : std_logic_vector(31 downto 0);
+  signal sig_6_18_in : std_logic_vector(31 downto 0);
+  signal sig_7_19_in : std_logic_vector(31 downto 0);
+  signal sig_8_18_in : std_logic_vector(31 downto 0);
+  signal sig_9_19_in : std_logic_vector(31 downto 0);
+  signal sig_10_18_in : std_logic_vector(31 downto 0);
+  signal sig_11_19_in : std_logic_vector(31 downto 0);
+  signal sig_12_18_in : std_logic_vector(31 downto 0);
+  signal sig_13_19_in : std_logic_vector(31 downto 0);
+  signal sig_14_1_val : std_logic_vector(31 downto 0);
+  signal sig_15_2_addr : std_logic_vector(31 downto 0);
+  signal sig_16_3_addr : std_logic_vector(31 downto 0);
+  signal sig_17_5_in0 : std_logic_vector(31 downto 0);
+  signal sig_18_4_in0 : std_logic_vector(31 downto 0);
+  signal sig_19_4_in1 : std_logic_vector(31 downto 0);
+  signal sig_20_5_in1 : std_logic_vector(31 downto 0);
   
   signal var_s_en : std_logic;
-  signal var_s_d  : signed(31 downto 0);
-  signal var_s_q  : signed(31 downto 0);
+  signal var_s_d  : std_logic_vector(31 downto 0);
+  signal var_s_q  : std_logic_vector(31 downto 0);
   
-  signal mul_0_y : signed(31 downto 0);
-  signal add_0_y : signed(31 downto 0);
+  signal mul_0_y : std_logic_vector(31 downto 0);
+  signal add_0_y : std_logic_vector(31 downto 0);
   
   signal state : integer range 0 to 5 := 0;
   
   -- Component declarations (assumed to exist)
   component Reg32 is
-    port(clk: in std_logic; en: in std_logic; d: in signed(31 downto 0); q: out signed(31 downto 0));
+    port(clk: in std_logic; en: in std_logic; d: in std_logic_vector(31 downto 0); q: out std_logic_vector(31 downto 0));
   end component;
   
   component Adder32 is
-    port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));
+    port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));
   end component;
   
   component Mul32 is
-    port(a: in signed(31 downto 0); b: in signed(31 downto 0); y: out signed(31 downto 0));
+    port(a: in std_logic_vector(31 downto 0); b: in std_logic_vector(31 downto 0); y: out std_logic_vector(31 downto 0));
   end component;
   
   component RamSimple is
@@ -117,9 +116,9 @@ architecture rtl of hls_top_unified_23 is
       clk  : in  std_logic;
       en   : in  std_logic;
       we   : in  std_logic;
-      addr : in  signed(ADDR_WIDTH-1 downto 0);
-      din  : in  signed(DATA_WIDTH-1 downto 0);
-      dout : out signed(DATA_WIDTH-1 downto 0)
+      addr : in  std_logic_vector(ADDR_WIDTH-1 downto 0);
+      din  : in  std_logic_vector(DATA_WIDTH-1 downto 0);
+      dout : out std_logic_vector(DATA_WIDTH-1 downto 0)
     );
   end component;
   
@@ -246,7 +245,7 @@ begin
   process(all)
   begin
     case sel_var_s_val is
-      when 0 => sig_14_1_val <= to_signed(0, 32);
+      when 0 => sig_14_1_val <= x"00000000";
       when 1 => sig_14_1_val <= sig_5_14_in;
       when 2 => sig_14_1_val <= sig_5_14_in;
       when 3 => sig_14_1_val <= sig_5_14_in;
@@ -259,10 +258,10 @@ begin
   process(all)
   begin
     case sel_mem_0_addr is
-      when 0 => sig_15_2_addr <= to_signed(0, 32);
-      when 1 => sig_15_2_addr <= to_signed(1, 32);
-      when 2 => sig_15_2_addr <= to_signed(2, 32);
-      when 3 => sig_15_2_addr <= to_signed(3, 32);
+      when 0 => sig_15_2_addr <= x"00000000";
+      when 1 => sig_15_2_addr <= x"00000001";
+      when 2 => sig_15_2_addr <= x"00000002";
+      when 3 => sig_15_2_addr <= x"00000003";
       when others => sig_15_2_addr <= (others => '0');
     end case;
   end process;
@@ -271,10 +270,10 @@ begin
   process(all)
   begin
     case sel_mem_1_addr is
-      when 0 => sig_16_3_addr <= to_signed(0, 32);
-      when 1 => sig_16_3_addr <= to_signed(1, 32);
-      when 2 => sig_16_3_addr <= to_signed(2, 32);
-      when 3 => sig_16_3_addr <= to_signed(3, 32);
+      when 0 => sig_16_3_addr <= x"00000000";
+      when 1 => sig_16_3_addr <= x"00000001";
+      when 2 => sig_16_3_addr <= x"00000002";
+      when 3 => sig_16_3_addr <= x"00000003";
       when others => sig_16_3_addr <= (others => '0');
     end case;
   end process;

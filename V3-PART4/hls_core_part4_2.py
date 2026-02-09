@@ -2497,3 +2497,189 @@ class UnifiedVHDLGenerator:
         if len(succs) != 1:
             raise RuntimeError(f"Expected exactly 1 succ with label={needed_label} out of node {src_id}, got {succs}")
         return edge_sig[succs[0]]
+
+
+class SimpleTestbenchGenerator:
+    def __init__(self, tb_name=None, n_probe=8, timeout_cycles=20000):
+        self.tb_name = tb_name
+        self.n_probe = int(n_probe)
+        self.timeout_cycles = int(timeout_cycles)
+
+    def generate(self, dfg, dp, schedule, binding, edge_regs, dp_info, top_name, tb_name=None):
+        """
+        Args:
+          top_name: DUT entity name (e.g., "hls_top_unified_24")
+          tb_name : testbench entity name (e.g., "tb_hls_24"). If None, uses self.tb_name or "tb_<top_name>"
+
+        IMPORTANT:
+          External-name aliases MUST start with the *exact* TB entity name used in this file.
+          This function guarantees that by computing `tb_root` once and using it everywhere.
+        """
+        # Discover memory and variable instances from binding
+        mem_insts = sorted({res.instance for (_nid, res) in binding.items()
+                            if getattr(res, "kind", None) == "mem"})
+        var_insts = sorted({res.instance for (_nid, res) in binding.items()
+                            if getattr(res, "kind", None) == "var"})
+
+        # Resolve TB name deterministically (single source of truth)
+        tb_root = tb_name if tb_name is not None else (self.tb_name if self.tb_name is not None else f"tb_{top_name}")
+
+        # In your generator you fixed RAM ADDR_WIDTH => 10, DATA_WIDTH => 32
+        addr_width = 10
+        depth = 2 ** addr_width
+        n_probe = max(0, self.n_probe)
+
+        lines = []
+        w = lines.append
+
+        w("library ieee;")
+        w("use ieee.std_logic_1164.all;")
+        w("use ieee.numeric_std.all;")
+        w("")
+        w(f"entity {tb_root} is")
+        w("end entity;")
+        w("")
+        w(f"architecture sim of {tb_root} is")
+        w("  constant CLK_PERIOD     : time    := 10 ns;")
+        w(f"  constant TIMEOUT_CYCLES : integer := {self.timeout_cycles};")
+        w("")
+        w("  signal clk  : std_logic := '0';")
+        w("  signal rst  : std_logic := '1';")
+        w("  signal done : std_logic;")
+        w("")
+        w(f"  constant ADDR_WIDTH : integer := {addr_width};")
+        w(f"  constant DEPTH      : integer := {depth};")
+        w("")
+        w("  -- RamSimple internal array type (must match RamSimple 'ram' signal type)")
+        w("  type ram_t is array (0 to DEPTH-1) of std_logic_vector(31 downto 0);")
+        w("")
+
+        # External-name aliases for RAMs
+        for inst in mem_insts:
+            w(f"  -- External-name alias to internal RAM array for {inst}")
+            w(f"  alias dut_{inst}_ram : ram_t is")
+            w(f"    << signal .{tb_root}.dut.U_{inst}.ram : ram_t >>;")
+            w("")
+
+        # External-name aliases for variable registers (q)
+        for inst in var_insts:
+            w(f"  -- External-name alias to internal variable Q for {inst}")
+            w(f"  alias dut_{inst}_q : std_logic_vector(31 downto 0) is")
+            w(f"    << signal .{tb_root}.dut.{inst}_q : std_logic_vector(31 downto 0) >>;")
+            w("")
+
+        # Probe signals to make wave viewing easy (RAM[0..N-1], var_q as integer)
+        if mem_insts:
+            w("  -- Wave-friendly RAM probes (integers)")
+            for inst in mem_insts:
+                for i in range(n_probe):
+                    w(f"  signal {inst}_{i} : integer := 0;")
+            w("")
+
+        if var_insts:
+            w("  -- Wave-friendly VAR probes (integers)")
+            for inst in var_insts:
+                w(f"  signal {inst}_q_i : integer := 0;")
+            w("")
+
+        w("begin")
+        w("  -- Clock")
+        w("  clk <= not clk after CLK_PERIOD/2;")
+        w("")
+        w("  -- DUT")
+        w(f"  dut : entity work.{top_name}")
+        w("    port map (")
+        w("      clk  => clk,")
+        w("      rst  => rst,")
+        w("      done => done")
+        w("    );")
+        w("")
+
+        # Probes update continuously
+        if mem_insts or var_insts:
+            w("  -- Continuous probes (wave-friendly)")
+            w("  p_probes : process(all)")
+            w("  begin")
+            if mem_insts:
+                for inst in mem_insts:
+                    for i in range(n_probe):
+                        w(f"    {inst}_{i} <= to_integer(signed(dut_{inst}_ram({i})));")
+            if var_insts:
+                for inst in var_insts:
+                    w(f"    {inst}_q_i <= to_integer(signed(dut_{inst}_q));")
+            w("  end process;")
+            w("")
+
+        # Reset process
+        w("  -- Reset")
+        w("  p_reset : process")
+        w("  begin")
+        w("    rst <= '1';")
+        w("    wait for 5*CLK_PERIOD;")
+        w("    rst <= '0';")
+        w("    wait;")
+        w("  end process;")
+        w("")
+
+        # Run process: print init, wait done/timeout, print final
+        w("  -- Run + (optional) RAM dumps")
+        w("  p_run : process")
+        w("    variable cycles : integer := 0;")
+        w("    variable v      : integer := 0;")
+        w("  begin")
+        w("    -- Let hierarchy elaborate so external-name aliases resolve")
+        w("    wait for 0 ns;")
+        w("")
+
+        if mem_insts:
+            w("    -- Print RAM init (first few locations)")
+            for inst in mem_insts:
+                w(f"    report \"RAM INIT {inst}[0..{n_probe-1}]\";")
+                for i in range(n_probe):
+                    w(f"    v := to_integer(signed(dut_{inst}_ram({i})));")
+                    w(f"    report \"  {inst}[{i}] = \" & integer'image(v);")
+            w("")
+
+        if var_insts:
+            w("    -- Print VAR init")
+            for inst in var_insts:
+                w(f"    report \"VAR INIT {inst}_q = \" & integer'image(to_integer(signed(dut_{inst}_q)));")
+            w("")
+
+        w("    -- Wait until reset deasserted")
+        w("    wait until rst = '0';")
+        w("    wait until rising_edge(clk);")
+        w("")
+        w("    -- Wait for done or timeout")
+        w("    while done /= '1' loop")
+        w("      wait until rising_edge(clk);")
+        w("      cycles := cycles + 1;")
+        w("      if cycles >= TIMEOUT_CYCLES then")
+        w("        assert false report \"TIMEOUT: done did not assert\" severity failure;")
+        w("      end if;")
+        w("    end loop;")
+        w("")
+        w("    report \"DONE asserted after \" & integer'image(cycles) & \" cycles.\";")
+        w("")
+
+        if mem_insts:
+            w("    -- Print RAM after DONE (first few locations)")
+            for inst in mem_insts:
+                w(f"    report \"RAM FINAL {inst}[0..{n_probe-1}]\";")
+                for i in range(n_probe):
+                    w(f"    v := to_integer(signed(dut_{inst}_ram({i})));")
+                    w(f"    report \"  {inst}[{i}] = \" & integer'image(v);")
+            w("")
+
+        if var_insts:
+            w("    -- Print VAR after DONE")
+            for inst in var_insts:
+                w(f"    report \"VAR FINAL {inst}_q = \" & integer'image(to_integer(signed(dut_{inst}_q)));")
+            w("")
+
+        w("    wait;")
+        w("  end process;")
+        w("")
+        w("end architecture;")
+
+        return "\n".join(lines)
